@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on My Little Garden of Code</title>
+    <link>https://philtomson.github.io/post/</link>
+    <description>Recent content in Posts on My Little Garden of Code</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 11 Jun 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://philtomson.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Migrated blog from Octopress to Hugo</title>
+      <link>https://philtomson.github.io/blog/2018-06-11-migrated-blog-from-octopress-to-hugo/</link>
+      <pubDate>Mon, 11 Jun 2018 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2018-06-11-migrated-blog-from-octopress-to-hugo/</guid>
+      <description>I went to add a new blog post last week and then tried to run octorpress to generate the static html for the blog as I had been doing in the past. But of course it wasn&amp;rsquo;t so simple. I&amp;rsquo;d upgraded my dev machine to Ubuntu 18.04 a few weeks back and Octopress wasn&amp;rsquo;t happy with the version of Ruby I had. When I went to try to build the old version of Ruby that it wanted, that build failed (likely something is more strict in gcc-7.</description>
+    </item>
+    
+    <item>
+      <title>Testing MathJax</title>
+      <link>https://philtomson.github.io/blog/2017-02-06-testing-mathjax/</link>
+      <pubDate>Mon, 06 Feb 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2017-02-06-testing-mathjax/</guid>
+      <description>\[f(x;\mu,\sigma^2) = \frac{1}{\sigma\sqrt{2\pi}}e^{-\frac{1}{2}\left(\frac{x-\mu}{\sigma}\right)^2}\]
+ $$ \begin{align} \mbox{Union: } &amp; A\cup B = \{x\mid x\in A \mbox{ or } x\in B\} \\ \mbox{Concatenation: } &amp; A\circ B = \{xy\mid x\in A \mbox{ and } y\in B\} \\ \mbox{Star: } &amp; A^\star = \{x_1x_2\ldots x_k \mid k\geq 0 \mbox{ and each } x_i\in A\} \\ \end{align} $$  \[e^{i \pi} + 1 = 0\]</description>
+    </item>
+    
+    <item>
+      <title>FUNemployment</title>
+      <link>https://philtomson.github.io/blog/2017-02-02-funemployment/</link>
+      <pubDate>Thu, 02 Feb 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2017-02-02-funemployment/</guid>
+      <description>I finished up a 16-month LLVM contracting gig at the end of 2016. Got the flu a couple of weeks ago and have been pretty much out of commission until today when I finally had enough mental clarity and energy to get this blog going again.
+Since I last posted in 2014 it seems that Octopress has been updated. I had to go back to my old desktop machine and find where all the blog-related files were and transfer them to my current desktop machine.</description>
+    </item>
+    
+    <item>
+      <title>Some notes on building and running mirage unikernels on Cubieboard2</title>
+      <link>https://philtomson.github.io/blog/2014-09-10-some-notes-on-building-and-running-mirage-unikernels-on-cubieboard2/</link>
+      <pubDate>Wed, 10 Sep 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2014-09-10-some-notes-on-building-and-running-mirage-unikernels-on-cubieboard2/</guid>
+      <description>First a caveat: These notes reflect the state of Mirage as of the date of this post. Mirage is still in heavy development and the instructions here will change (hopefully become simpler) going forward.
+These are some notes on what I had to do to get a Mirage unikernel running under Xen on a cubieboard2. The intent here is to document some of the gotchyas I ran into.
+Installing Xen for ARM on Cubieboard</description>
+    </item>
+    
+    <item>
+      <title>Cooperative Concurrency in OCaml: A Core.Std.Async example</title>
+      <link>https://philtomson.github.io/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/</link>
+      <pubDate>Wed, 09 Jul 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/</guid>
+      <description>I&amp;rsquo;ve been working on an OCaml Mqtt client for eventual use with MirageOS. Mqtt is a lightweight publish/subscribe messaging transport protocol that&amp;rsquo;s aimed at embedded systems and IoT applications. Without going into much detail about the protocol, implementing it requires some form of concurrency as there is a keep-alive ping that needs to be sent from the client to the broker at regular intervals to keep the connection alive. The client can also be receiving messages from the broker and needs to be able to queue up those messages for processing.</description>
+    </item>
+    
+    <item>
+      <title>stop the presses ocaml wins</title>
+      <link>https://philtomson.github.io/blog/2014-05-30-stop-the-presses-ocaml-wins/</link>
+      <pubDate>Fri, 30 May 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2014-05-30-stop-the-presses-ocaml-wins/</guid>
+      <description>###Benchmarking is a tricky thing.
+Several sharp eyes noticed some flaws in the OCaml code in my last post.
+The main problem was pointed out by Kim Nguyễn in the comments:
+ your OCaml version is flawed&amp;hellip; First in F# you do every computation in integer and only convert as float at the end (it seems). If you do the same in OCaml, you will gain some speed, that is: list_sum should use 0 and +, and distance should use let x = a - b in x*x to compute the square and only call &amp;ldquo;float&amp;rdquo; before sqrt, as you do in F# (and therefore also call float at the end on num_correct since list_sum now returns an integer.</description>
+    </item>
+    
+    <item>
+      <title>Comparing a Machine Learning algorithm implemented in F# and OCaml</title>
+      <link>https://philtomson.github.io/blog/2014-05-29-comparing-a-machine-learning-algorithm-implemented-in-f#-and-ocaml/</link>
+      <pubDate>Thu, 29 May 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2014-05-29-comparing-a-machine-learning-algorithm-implemented-in-f#-and-ocaml/</guid>
+      <description>(UPDATE: please see the next post: Stop the Presses: OCaml wins in terms of speed in which it is shown that there were some serious flaws in my OCaml implementation below. I&amp;rsquo;ll keep this post around for reference.)
+I&amp;rsquo;ve been dabbling with OCaml for the last several years and so when I saw a recent Meetup notice about an F# machine learning code dojo being led by Mathias Brandewinder within walking distance of my house I thought I&amp;rsquo;d check it out.</description>
+    </item>
+    
+    <item>
+      <title>Drawing Happy Little Trees: tree meditation number 2</title>
+      <link>https://philtomson.github.io/blog/2014-05-14-drawing-happy-little-trees-tree-meditation-number-2/</link>
+      <pubDate>Wed, 14 May 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2014-05-14-drawing-happy-little-trees-tree-meditation-number-2/</guid>
+      <description>In the previous Tree Meditation we pondered some preliminary ideas about treeness. Now let&amp;rsquo;s think about how to draw our trees. Before we start, make sure you paste this tree type code from the last installment into the Try OCaml REPL:
+1  type &amp;#39;a tree = Empty | Leaf of &amp;#39;a | Node of &amp;#39;a tree * &amp;#39;a * &amp;#39;a tree   Last time we coded our little tree using the constructors Empty, Leaf, and Node defined in our tree type:</description>
+    </item>
+    
+    <item>
+      <title>Coding Happy Little Trees: tree meditation number 1</title>
+      <link>https://philtomson.github.io/blog/2014-04-29-coding-happy-little-trees-tree-meditation-number-1/</link>
+      <pubDate>Tue, 29 Apr 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2014-04-29-coding-happy-little-trees-tree-meditation-number-1/</guid>
+      <description>It all started a few months ago when I created a quad-tree structure and then wanted to be able to visualize those trees with GraphViz. Thus this tree meditation was born. And who was the master of happy little trees? Bob Ross of course. So if you like, read the following in Bob&amp;rsquo;s very relaxing voice&amp;hellip;. try not to go to sleep.
+Before we can code our happy little trees we need to define what a tree is: 1  # type &amp;#39;a tree = Empty | Leaf of &amp;#39;a | Node of &amp;#39;a tree * &amp;#39;a * &amp;#39;a tree ;;</description>
+    </item>
+    
+    <item>
+      <title>C&#43;&#43; Dusty Corner number 537: 0 is sometimes a special number</title>
+      <link>https://philtomson.github.io/blog/2014-03-07-c---dusty-corner-number-537-0-is-sometimes-a-special-number/</link>
+      <pubDate>Fri, 07 Mar 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2014-03-07-c---dusty-corner-number-537-0-is-sometimes-a-special-number/</guid>
+      <description>I recently discovered the C++ Quiz site and figuring that it&amp;rsquo;s always good to practice C++ skills I started going through the questions. The third question I encountered gave me some pause&amp;hellip; The question was:
+According to the C++11 standard, what is the output of this program? #include &amp;lt;iostream&amp;gt; void print(char const *str) { std::cout &amp;lt;&amp;lt; str; } void print(short num) { std::cout &amp;lt;&amp;lt; num; } int main() { print(&amp;quot;abc&amp;quot;); print(0); print(&#39;A&#39;); }  Now the obvious response would be &amp;ldquo;abc065&amp;rdquo;, but I suspected there was some sort of trickery afoot here.</description>
+    </item>
+    
+    <item>
+      <title>Is Growth Really an End in Itself</title>
+      <link>https://philtomson.github.io/blog/2013-04-28-is-growth-really-an-end-in-itself/</link>
+      <pubDate>Sun, 28 Apr 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2013-04-28-is-growth-really-an-end-in-itself/</guid>
+      <description>I had an interview at a startup downtown this last week. This company has revenue and is selling stuff. At one point I asked the Director of Engineering: &amp;ldquo;So, is the company profitable?&amp;rdquo;. Apparently this wasn&amp;rsquo;t the right question to ask. His response was they weren&amp;rsquo;t trying to be profitable, they were trying to grow. As I was pondering this later it seemed odd to want growth over profitability. But apparently in the topsy-turvy world of venture capital funded startups this makes some kind of sense.</description>
+    </item>
+    
+    <item>
+      <title>Using the graphics module in OCaml</title>
+      <link>https://philtomson.github.io/blog/2013-01-01-using-the-graphics-module-in-ocaml/</link>
+      <pubDate>Tue, 01 Jan 2013 00:00:00 +0000</pubDate>
+      
+      <guid>https://philtomson.github.io/blog/2013-01-01-using-the-graphics-module-in-ocaml/</guid>
+      <description> </description>
+    </item>
+    
+  </channel>
+</rss>

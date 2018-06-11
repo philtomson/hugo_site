@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width,minimum-scale=1,maximum-scale=1">
+
+  
+    
+    
+      <link href="/css/fonts.css" rel="stylesheet" type="text/css">
+    
+  
+
+  
+  <title>Coding Happy Little Trees: tree meditation number 1</title>
+
+  
+  
+  <link rel="stylesheet" href="/css/hugo-octopress.css">
+
+  
+  
+
+  
+    <link rel="stylesheet" href="/css/fork-awesome.min.css">
+  
+
+  
+  <link href="https://philtomson.github.io/favicon.png" rel="icon">
+
+  
+  
+  
+
+  
+
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+
+  <meta name="author" content="">
+
+  
+  <meta name="generator" content="Hugo 0.40.1" />
+
+  
+  
+
+  
+  
+
+</head>
+<body>
+
+
+<header role="banner"><hgroup>
+  
+  <h1><a href="https://philtomson.github.io/">My Little Garden of Code</a></h1>
+    <h2></h2>
+</hgroup></header>
+
+
+<nav role="navigation">
+<fieldset class="mobile-nav">
+  
+  <select onchange="location = this.value;">
+    <option value="">Navigate…</option>
+      
+        <option value="https://philtomson.github.io/">» Home</option>
+      
+
+  </select>
+</fieldset>
+
+
+<ul class="main-navigation">
+  
+  
+    
+      <li><a href="https://philtomson.github.io/" title="Home">Home</a></li>
+    
+  
+</ul>
+
+
+<ul class="subscription">
+  
+
+</ul>
+
+
+</nav>
+
+
+<div id="main">
+  <div id="content">
+    <div>
+      <article class="hentry" role="article">
+
+        
+        
+
+<header>
+    <p class="meta">Apr 29, 2014
+         - 4 minute read 
+         - <a href="https://philtomson.github.io/blog/2014-04-29-coding-happy-little-trees-tree-meditation-number-1/#disqus_thread">Comments</a>
+
+        
+        
+        
+            - 
+        
+    </p>
+    <h1 class="entry-title">
+         Coding Happy Little Trees: tree meditation number 1 
+    </h1>
+</header>
+
+
+        <div class="entry-content">
+          
+          
+          
+          
+          <p><img src="http://t3.gstatic.com/images?q=tbn:ANd9GcSIjEBactvxvvUkh6DVgHT2Dan9e57x3nbGbq5RdzjwXkcV4V1r" alt="Alt Bob Ross" title="Bob Ross, master of happy trees" /></p>
+
+<p><em>It all started a few months ago when I created a quad-tree structure and
+then wanted to be able to visualize those trees with GraphViz. Thus
+  this tree meditation was born. And who was the master of happy little trees? <a href="http://en.wikipedia.org/wiki/Bob_Ross">Bob Ross</a> of course. So if you like, read the following in Bob&rsquo;s very relaxing voice&hellip;. try not to go to sleep.</em></p>
+
+<p>Before we can code our happy little trees we need to define what a tree is:
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">1
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#66d9ef">type</span> <span style="color:#66d9ef">&#39;</span>a tree <span style="color:#f92672">=</span> <span style="color:#a6e22e">Empty</span> <span style="color:#f92672">|</span> <span style="color:#a6e22e">Leaf</span> <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">&#39;</span>a <span style="color:#f92672">|</span> <span style="color:#a6e22e">Node</span> <span style="color:#66d9ef">of</span> <span style="color:#66d9ef">&#39;</span>a tree <span style="color:#f92672">*</span> <span style="color:#66d9ef">&#39;</span>a <span style="color:#f92672">*</span> <span style="color:#66d9ef">&#39;</span>a tree <span style="color:#f92672">;;</span></code></pre></td></tr></table>
+</div>
+</div></p>
+
+<p>You can go ahead and type that yourself into the <a href="http://try.ocamlpro.com/">online OCaml REPL (Read Evaluate Print Loop)</a>. Go ahead, give it a try.</p>
+
+<p>The type definition here is in <a href="http://ocaml.org/">OCaml</a>. The ML family of languages (SML, OCaml and Haskell, for example) excel at creating pretty trees because they have <a href="http://en.wikipedia.org/wiki/Algebraic_data_type">algebraic data types</a>. What&rsquo;s the <em>&lsquo;a tree</em> mean? The <em>&lsquo;a</em> is a type variable and means that we&rsquo;re creating trees which contain data of type <em>&lsquo;a</em>. Since <em>&lsquo;a</em> isn&rsquo;t specified it means that any type of data could live in the tree; our tree is <em>polymorphic</em>.</p>
+
+<p>Since this is a SUM type (also called an OR type, notice the &lsquo;|&rsquo;s in the definition above) we can surmise that a tree can either be <em>Empty</em> or have a <em>Leaf</em> or a <em>Node</em>. <em>Empty</em>, <em>Leaf</em> and <em>Node</em> are used to build our tree, they are our tree <em>constructors</em>.</p>
+
+<p><em>Empty</em>, what&rsquo;s that mean? Think of it as the tree of nothingness. Very Zen. Hopefully it will make more sense when we start creating and traversing trees.</p>
+
+<p><em>Leaf of &lsquo;a</em> means that a leaf can contain data of type <em>&lsquo;a</em> and as was explained above, that means that the leaf can contain data of any type. How do we create a <em>Leaf of &lsquo;a</em> in our code?</p>
+
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#a6e22e">Leaf</span> <span style="color:#e6db74">&#34;I&#39;m a Leaf&#34;</span> <span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> tree <span style="color:#f92672">=</span> <span style="color:#a6e22e">Leaf</span> <span style="color:#e6db74">&#34;I&#39;m a Leaf&#34;</span> </code></pre></td></tr></table>
+</div>
+</div>
+
+<p>The above was typed into the OCaml REPL. The <em>#</em> is the REPL prompt, we only typed in the actual <em>Leaf &ldquo;I&rsquo;m a Leaf&rdquo;</em> part. The second line shows the result. Notce that the type is <em>string tree</em> because we passed a string to the <em>Leaf</em> constructor. So our leaf is itself a tree. Ok, maybe that seems a little stange, but hold up a leaf by the stem and it can certainly look like a little tree on it&rsquo;s own, don&rsquo;t you think? Fractals, think fractals.</p>
+
+<p>Now we&rsquo;re left with that *Node of &lsquo;a tree * &lsquo;a * &lsquo;a tree* part of the tree type definition. Here we&rsquo;ve reached the essence of <em>treeness</em>. A <em>Node</em> of a tree has three parts: A <em>&lsquo;a tree</em> on the left, the actual <em>&lsquo;a</em> data contained by this <em>Node</em> and another <em>&lsquo;a tree</em> on the right. This part of the definition of <em>tree</em> is recursive because a <em>Node</em> is the piece of a tree which can contain other trees - in our case we have defined a <em>binary</em> tree type since each node has only two branches: a left tree and a right tree. What&rsquo;s with the asterisks? Technically they indicate that this part of the type is a <em>Cartesian product</em> (algebraic datatypes remember). We can think of this particular one as a <em>triple</em> - a collection of 3 things.</p>
+
+<p>So without further ado, let&rsquo;s code a happy little tree:</p>
+
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#a6e22e">Node</span><span style="color:#f92672">(</span><span style="color:#a6e22e">Leaf</span> 2<span style="color:#f92672">,</span> 1<span style="color:#f92672">,</span> <span style="color:#a6e22e">Leaf</span> 3<span style="color:#f92672">)</span> <span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> tree <span style="color:#f92672">=</span> <span style="color:#a6e22e">Node</span> <span style="color:#f92672">(</span><span style="color:#a6e22e">Leaf</span> 2<span style="color:#f92672">,</span> 1<span style="color:#f92672">,</span> <span style="color:#a6e22e">Leaf</span> 3<span style="color:#f92672">)</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>The REPL tells us this is an <em>int tree</em>, a tree which contains integers at it&rsquo;s nodes and leaves.</p>
+
+<p>And what does it look like?</p>
+
+<p><img src="/img/happy_tree.png" alt="Alt Our Happy Tree" /></p>
+
+<p>Notice in this case that we&rsquo;ve got a complete tree; we did not use the <em>Empty</em> constructor. What if we had?</p>
+
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">2
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#a6e22e">Node</span><span style="color:#f92672">(</span><span style="color:#a6e22e">Leaf</span> 2<span style="color:#f92672">,</span> 1<span style="color:#f92672">,</span> <span style="color:#a6e22e">Empty</span><span style="color:#f92672">)</span> <span style="color:#f92672">;;</span>
+<span style="color:#f92672">-</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> tree <span style="color:#f92672">=</span> <span style="color:#a6e22e">Node</span> <span style="color:#f92672">(</span><span style="color:#a6e22e">Leaf</span> 2<span style="color:#f92672">,</span> 1<span style="color:#f92672">,</span> <span style="color:#a6e22e">Empty</span><span style="color:#f92672">)</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>Now we have what is perhaps a less happy little tree. The right branch of our little tree is <em>empty</em>. The <em>Leaf 3</em> has fallen. Now perhaps you can see why we need <em>Empty</em>. <em>Node</em> must have two sub-trees. We can&rsquo;t just do something like:</p>
+
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">4
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#f92672">#</span> <span style="color:#a6e22e">Node</span><span style="color:#f92672">(</span><span style="color:#a6e22e">Leaf</span> 2<span style="color:#f92672">,</span> 1<span style="color:#f92672">)</span> <span style="color:#f92672">;;</span>
+<span style="color:#a6e22e">File</span> <span style="color:#e6db74">&#34;&#34;</span><span style="color:#f92672">,</span> line 1<span style="color:#f92672">,</span> characters 1<span style="color:#f92672">-</span>16<span style="color:#f92672">:</span>
+<span style="color:#a6e22e">Error</span><span style="color:#f92672">:</span> <span style="color:#a6e22e">The</span> constructor <span style="color:#a6e22e">Node</span> expects 3 argument<span style="color:#f92672">(</span>s<span style="color:#f92672">),</span>
+       but is applied here <span style="color:#66d9ef">to</span> 2 argument<span style="color:#f92672">(</span>s<span style="color:#f92672">)</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>Because the <em>Node</em> constructor expects to have three components. So <em>Empty</em> is used to designate the absense of a <em>Node</em> or <em>Leaf</em>.</p>
+
+<p>How did I draw that tree above? That&rsquo;ll have to wait for the next Tree Medititation installment when we&rsquo;ll discuss things like <em>tree traversal</em> and generating <em>dot files</em> used by <a href="http://www.graphviz.org/">Graphviz</a> to create images.</p>
+
+        </div>
+        
+
+<footer>
+  <p class="meta">
+    <span class="byline author vcard">Posted by <span class="fn"></span></span>
+    
+    <time>Apr 29, 2014</time>
+    
+    </span>
+  </p>
+
+  
+  
+
+  
+
+  <p class="meta">
+    
+        <a class="basic-alignment left" href="https://philtomson.github.io/blog/2014-03-07-c---dusty-corner-number-537-0-is-sometimes-a-special-number/" title="C&#43;&#43; Dusty Corner number 537: 0 is sometimes a special number">C&#43;&#43; Dusty Corner number 537: 0 is sometimes a special number</a>
+    
+
+    
+      <a class="basic-alignment right" href="https://philtomson.github.io/blog/2014-05-14-drawing-happy-little-trees-tree-meditation-number-2/" title="Drawing Happy Little Trees: tree meditation number 2">Drawing Happy Little Trees: tree meditation number 2</a>
+    
+  </p>
+  
+    
+      <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'mylittlegardenofcode';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+  
+</footer>
+
+      </article>
+    </div>
+    
+
+<aside class="sidebar thirds">
+  <section class="first odd">
+
+    
+
+    <p>
+      
+    </p>
+  </section>
+
+
+
+  
+  <ul class="sidebar-nav">
+    <li class="sidebar-nav-item">
+      <a target="_blank" href="https://github.com/philtomson/" title="https://github.com/philtomson/"><i class="fa fa-github fa-3x"></i></a>
+      
+      
+      
+      
+         
+      
+      
+      <a target="_blank" href="https://stackoverflow.com/users/46190/aneccodeal" title="https://stackoverflow.com/users/46190/aneccodeal"><i class="fa fa-stack-overflow fa-3x"></i></a>
+      
+      
+      
+      
+      
+
+    
+    
+    </li>
+  </ul>
+
+  
+
+  
+
+  
+  
+  
+    
+      <section class="even">
+        <h1>Recent Posts</h1>
+        <ul id="recent_posts">
+          
+          
+            
+              <li class="post">
+                <a href="/blog/2018-06-11-migrated-blog-from-octopress-to-hugo/">Migrated blog from Octopress to Hugo</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-06-testing-mathjax/">Testing MathJax</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-02-funemployment/">FUNemployment</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-09-10-some-notes-on-building-and-running-mirage-unikernels-on-cubieboard2/">Some notes on building and running mirage unikernels on Cubieboard2</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/">Cooperative Concurrency in OCaml: A Core.Std.Async example</a>
+              </li>
+            
+          
+        </ul>
+      </section>
+    
+  
+</aside>
+
+  </div>
+</div>
+
+<footer role="contentinfo">
+  <p>Copyright &copy; 2018  - <a href="https://philtomson.github.io/license/">License</a> -
+  <span class="credit">Powered by <a target="_blank" href="https://gohugo.io">Hugo</a> and <a target="_blank" href="https://github.com/parsiya/hugo-octopress/">Hugo-Octopress</a> theme.
+</p>
+
+</footer>
+
+
+
+
+
+
+</body>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+</html>
+
+

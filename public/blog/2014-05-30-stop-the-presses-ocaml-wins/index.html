@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width,minimum-scale=1,maximum-scale=1">
+
+  
+    
+    
+      <link href="/css/fonts.css" rel="stylesheet" type="text/css">
+    
+  
+
+  
+  <title>stop the presses ocaml wins</title>
+
+  
+  
+  <link rel="stylesheet" href="/css/hugo-octopress.css">
+
+  
+  
+
+  
+    <link rel="stylesheet" href="/css/fork-awesome.min.css">
+  
+
+  
+  <link href="https://philtomson.github.io/favicon.png" rel="icon">
+
+  
+  
+  
+
+  
+
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+
+  <meta name="author" content="">
+
+  
+  <meta name="generator" content="Hugo 0.40.1" />
+
+  
+  
+
+  
+  
+
+</head>
+<body>
+
+
+<header role="banner"><hgroup>
+  
+  <h1><a href="https://philtomson.github.io/">My Little Garden of Code</a></h1>
+    <h2></h2>
+</hgroup></header>
+
+
+<nav role="navigation">
+<fieldset class="mobile-nav">
+  
+  <select onchange="location = this.value;">
+    <option value="">Navigate…</option>
+      
+        <option value="https://philtomson.github.io/">» Home</option>
+      
+
+  </select>
+</fieldset>
+
+
+<ul class="main-navigation">
+  
+  
+    
+      <li><a href="https://philtomson.github.io/" title="Home">Home</a></li>
+    
+  
+</ul>
+
+
+<ul class="subscription">
+  
+
+</ul>
+
+
+</nav>
+
+
+<div id="main">
+  <div id="content">
+    <div>
+      <article class="hentry" role="article">
+
+        
+        
+
+<header>
+    <p class="meta">May 30, 2014
+         - 6 minute read 
+         - <a href="https://philtomson.github.io/blog/2014-05-30-stop-the-presses-ocaml-wins/#disqus_thread">Comments</a>
+
+        
+        
+        
+            - 
+        
+    </p>
+    <h1 class="entry-title">
+         stop the presses ocaml wins 
+    </h1>
+</header>
+
+
+        <div class="entry-content">
+          
+          
+          
+          
+          <p>###Benchmarking is a tricky thing.</p>
+
+<p>Several sharp eyes noticed some flaws in the OCaml code in my <a href="http://philtomson.github.io/blog/2014/05/29/comparing-a-machine-learning-algorithm-implemented-in-f-number-and-ocaml/">last post</a>.</p>
+
+<p>The main problem was pointed out by Kim Nguyễn in the comments:</p>
+
+<blockquote>
+<p>your OCaml version is flawed&hellip; First in F# you do every computation in integer and only convert as float at the end (it seems). If you do the same in OCaml, you will gain some speed, that is:
+list_sum should use 0 and +, and distance should use let x = a - b in x*x to compute the square and only call &ldquo;float&rdquo; before sqrt, as you do in F# (and therefore also call float at the end on num_correct since list_sum now returns an integer. Also the computation of num_correct should use now 1 and 0 instead of 1.0 and 0.0).</p>
+</blockquote>
+
+<p>I made the suggested changes to <em>distance</em> and <em>list_sum</em> :</p>
+
+<p>title = &ldquo;stop the presses ocaml wins&rdquo;
+let list_sum lst = List.fold_left (fun x acc -&gt; x+acc) 0 lst</p>
+
+<p>let distance (p1: int list) (p2: int list) =
+  sqrt (float_of_int (list_sum (List.map2 ( fun a b -&gt; let diff = a-b in
+                                           diff*diff ) p1 p2) ))</p>
+
+<p>{% endcodeblock %}</p>
+
+<p>Those simple changes yielded a 2X speedup which puts the OCaml implementation on par with the non-parallelized F# version:</p>
+
+<pre><code>real    0m23.874s
+user    0m23.623s
+sys         0m0.079s
+</code></pre>
+
+<p>Then camlspotter pointed out something about <em>float array</em> that I&rsquo;d forgotten:
+&gt; In addition, comparing programs using Arrays and Lists is VERY unfair. In this kind of programs with loops you cannot ignore the cost of list construction and deconstruction. In addition, <strong>OCaml&rsquo;s float array has another benefits: its contents are unboxed, while float list does not</strong>.</p>
+
+<p>camlspotter was kind enough to submit an *Array*ized version of the OCaml code:</p>
+
+<p>title = &ldquo;stop the presses ocaml wins&rdquo;
+(* OCaml version submitted by @camlspotter
+   compile with:
+    ocamlopt str.cmxa -o classifyDigitsArray classifyDigitsArray.ml
+*)</p>
+
+<p>(*
+// This F# dojo is directly inspired by the
+// Digit Recognizer competition from Kaggle.com:
+// <a href="http://www.kaggle.com/c/digit-recognizer">http://www.kaggle.com/c/digit-recognizer</a>
+// The datasets below are simply shorter versions of
+// the training dataset from Kaggle.</p>
+
+<p>// The goal of the dojo will be to
+// create a classifier that uses training data
+// to recognize hand-written digits, and
+// evaluate the quality of our classifier
+// by looking at predictions on the validation data.</p>
+
+<p>*)</p>
+
+<p>let read_lines name : string list =
+  let ic = open_in name in
+  let try_read () =
+    try Some (input_line ic) with End_of_file -&gt; None in
+  let rec loop acc = match try_read () with
+    | Some s -&gt; loop (s :: acc)
+    | None -&gt; close_in ic; List.rev acc in
+  loop []</p>
+
+<p>(*</p>
+
+<p>// Two data files are included in the same place you
+// found this script:
+// trainingsample.csv, a file that contains 5,000 examples, and
+// validationsample.csv, a file that contains 500 examples.
+// The first file will be used to train your model, and the
+// second one to validate the quality of the model.</p>
+
+<p>// 1. GETTING SOME DATA</p>
+
+<p>// First let&rsquo;s read the contents of &ldquo;trainingsample.csv&rdquo;</p>
+
+<p>*)</p>
+
+<p>type labelPixels = { label: int; pixels: int array }
+let slurp_file file =
+  List.tl (read_lines file)
+  |&gt; List.map (fun line -&gt; Str.split (Str.regexp &ldquo;,&rdquo;) line )<br />
+  |&gt; List.map (fun numline -&gt; List.map (fun (x:string) -&gt; int_of_string x) numline)<br />
+  |&gt; List.map (fun line -&gt;
+    { label= List.hd line;
+      pixels= Array.of_list @@ List.tl line })
+  |&gt; Array.of_list</p>
+
+<p>let trainingset = slurp_file &ldquo;./trainingsample.csv&rdquo;</p>
+
+<p>(*
+// 6. COMPUTING DISTANCES</p>
+
+<p>// We need to compute the distance between images
+// Math reminder: the euclidean distance is
+// distance [ x1; y1; z1 ] [ x2; y2; z2 ] =
+// sqrt((x1-x2)<em>(x1-x2) + (y1-y2)</em>(y1-y2) + (z1-z2)*(z1-z2))
+*)</p>
+
+<p>let array_fold_left2 f acc a1 a2 =
+  let open Array in
+  let len = length a1 in
+  let rec iter acc i =
+    if i = len then acc
+    else
+      let v1 = unsafe_get a1 i in
+      let v2 = unsafe_get a2 i in
+      iter (f acc v1 v2) (i+1)
+  in
+  iter acc 0</p>
+
+<p>let distance p1 p2 =
+  sqrt
+  @@ float_of_int
+  @@ array_fold_left2 (fun acc a b -&gt; let d = a - b in acc + d * d) 0 p1 p2</p>
+
+<p>(*
+// 7. WRITING THE CLASSIFIER FUNCTION</p>
+
+<p>// We are now ready to write a classifier function!
+// The classifier should take a set of pixels
+// (an array of ints) as an input, search for the
+// closest example in our sample, and predict
+// the value of that closest element.</p>
+
+<p>*)</p>
+
+<p>let classify (pixels: int array) =
+  fst (
+    Array.fold_left (fun ((min_label, min_dist) as min) (x : labelPixels) -&gt;
+      let dist = distance pixels x.pixels in
+      if dist &lt; min_dist then (x.label, dist) else min)
+      (max_int, max_float) (* a tiny hack *)
+      trainingset
+  )</p>
+
+<p>(*
+// 8. EVALUATING THE MODEL AGAINST VALIDATION DATA</p>
+
+<p>// Now that we have a classifier, we need to check
+// how good it is.
+// This is where the 2nd file, validationsample.csv,
+// comes in handy.
+// For each Example in the 2nd file,
+// we know what the true Label is, so we can compare
+// that value with what the classifier says.
+// You could now check for each 500 example in that file
+// whether your classifier returns the correct answer,
+// and compute the % correctly predicted.
+*)</p>
+
+<p>let validationsample = slurp_file &ldquo;./validationsample.csv&rdquo;</p>
+
+<p>let num_correct =
+  Array.fold_left (fun sum p -&gt; sum + if classify p.pixels = p.label then 1 else 0) 0 validationsample</p>
+
+<p>let _ =
+  Printf.printf &ldquo;Percentage correct:%f\n&rdquo;
+  @@ float_of_int num_correct /. float_of_int (Array.length validationsample) *.100.0
+{% endcodeblock %}</p>
+
+<p>Now the non-parallelized OCaml version handily beats the parallelized F# version(by about 5 seconds):</p>
+
+<pre><code>real    0m11.686s
+user    0m11.529s
+sys     0m0.092s
+</code></pre>
+
+<p>&hellip;though the code is a good bit longer than the F# version which weighed in at 58 lines.</p>
+
+<p>###Observations:</p>
+
+<ol>
+<li>Be very careful about where you&rsquo;re doing integer vs float math ops; stay with ints as much as possible (so long as you&rsquo;re not sacrificing accuracy).</li>
+<li><em>float array</em> is preferrable to <em>float list</em> because the floats are unboxed in the former.</li>
+<li>Don&rsquo;t be obsessed with making an implementation in one language look like the implementation in the comparison language. I think I was focusing too much on the similiarities of the languages to see some of the optimization opportunities. Also, since I wrote the F# version first, I tended to make the OCaml version look like the F# version (usage of <em>minBy</em>, for example, and implementing my own <em>minBy</em> in OCaml instead of using camlspotter&rsquo;s <em>Array.fold_left</em> method.)</li>
+<li>The parallelization point remains: It&rsquo;s much easier in F#. How fast would this be if OCaml&rsquo;s Parmap used some kind of shared-memory implementation? The F# example was about 1.4X faster with <em>Parallel</em> so that would get the OCaml version down to ~8.5 seconds if a similar mechanism existed.</li>
+</ol>
+
+        </div>
+        
+
+<footer>
+  <p class="meta">
+    <span class="byline author vcard">Posted by <span class="fn"></span></span>
+    
+    <time>May 30, 2014</time>
+    
+    </span>
+  </p>
+
+  
+  
+
+  
+
+  <p class="meta">
+    
+        <a class="basic-alignment left" href="https://philtomson.github.io/blog/2014-05-29-comparing-a-machine-learning-algorithm-implemented-in-f#-and-ocaml/" title="Comparing a Machine Learning algorithm implemented in F# and OCaml">Comparing a Machine Learning algorithm implemented in F# and OCaml</a>
+    
+
+    
+      <a class="basic-alignment right" href="https://philtomson.github.io/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/" title="Cooperative Concurrency in OCaml: A Core.Std.Async example">Cooperative Concurrency in OCaml: A Core.Std.Async example</a>
+    
+  </p>
+  
+    
+      <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'mylittlegardenofcode';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+  
+</footer>
+
+      </article>
+    </div>
+    
+
+<aside class="sidebar thirds">
+  <section class="first odd">
+
+    
+
+    <p>
+      
+    </p>
+  </section>
+
+
+
+  
+  <ul class="sidebar-nav">
+    <li class="sidebar-nav-item">
+      <a target="_blank" href="https://github.com/philtomson/" title="https://github.com/philtomson/"><i class="fa fa-github fa-3x"></i></a>
+      
+      
+      
+      
+         
+      
+      
+      <a target="_blank" href="https://stackoverflow.com/users/46190/aneccodeal" title="https://stackoverflow.com/users/46190/aneccodeal"><i class="fa fa-stack-overflow fa-3x"></i></a>
+      
+      
+      
+      
+      
+
+    
+    
+    </li>
+  </ul>
+
+  
+
+  
+
+  
+  
+  
+    
+      <section class="even">
+        <h1>Recent Posts</h1>
+        <ul id="recent_posts">
+          
+          
+            
+              <li class="post">
+                <a href="/blog/2018-06-11-migrated-blog-from-octopress-to-hugo/">Migrated blog from Octopress to Hugo</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-06-testing-mathjax/">Testing MathJax</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-02-funemployment/">FUNemployment</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-09-10-some-notes-on-building-and-running-mirage-unikernels-on-cubieboard2/">Some notes on building and running mirage unikernels on Cubieboard2</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/">Cooperative Concurrency in OCaml: A Core.Std.Async example</a>
+              </li>
+            
+          
+        </ul>
+      </section>
+    
+  
+</aside>
+
+  </div>
+</div>
+
+<footer role="contentinfo">
+  <p>Copyright &copy; 2018  - <a href="https://philtomson.github.io/license/">License</a> -
+  <span class="credit">Powered by <a target="_blank" href="https://gohugo.io">Hugo</a> and <a target="_blank" href="https://github.com/parsiya/hugo-octopress/">Hugo-Octopress</a> theme.
+</p>
+
+</footer>
+
+
+
+
+
+
+</body>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+</html>
+
+

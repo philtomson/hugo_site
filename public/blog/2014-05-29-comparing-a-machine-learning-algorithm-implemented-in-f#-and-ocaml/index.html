@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width,minimum-scale=1,maximum-scale=1">
+
+  
+    
+    
+      <link href="/css/fonts.css" rel="stylesheet" type="text/css">
+    
+  
+
+  
+  <title>Comparing a Machine Learning algorithm implemented in F# and OCaml</title>
+
+  
+  
+  <link rel="stylesheet" href="/css/hugo-octopress.css">
+
+  
+  
+
+  
+    <link rel="stylesheet" href="/css/fork-awesome.min.css">
+  
+
+  
+  <link href="https://philtomson.github.io/favicon.png" rel="icon">
+
+  
+  
+  
+
+  
+
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+
+  <meta name="author" content="">
+
+  
+  <meta name="generator" content="Hugo 0.40.1" />
+
+  
+  
+
+  
+  
+
+</head>
+<body>
+
+
+<header role="banner"><hgroup>
+  
+  <h1><a href="https://philtomson.github.io/">My Little Garden of Code</a></h1>
+    <h2></h2>
+</hgroup></header>
+
+
+<nav role="navigation">
+<fieldset class="mobile-nav">
+  
+  <select onchange="location = this.value;">
+    <option value="">Navigate…</option>
+      
+        <option value="https://philtomson.github.io/">» Home</option>
+      
+
+  </select>
+</fieldset>
+
+
+<ul class="main-navigation">
+  
+  
+    
+      <li><a href="https://philtomson.github.io/" title="Home">Home</a></li>
+    
+  
+</ul>
+
+
+<ul class="subscription">
+  
+
+</ul>
+
+
+</nav>
+
+
+<div id="main">
+  <div id="content">
+    <div>
+      <article class="hentry" role="article">
+
+        
+        
+
+<header>
+    <p class="meta">May 29, 2014
+         - 10 minute read 
+         - <a href="https://philtomson.github.io/blog/2014-05-29-comparing-a-machine-learning-algorithm-implemented-in-f#-and-ocaml/#disqus_thread">Comments</a>
+
+        
+        
+        
+            - 
+        
+    </p>
+    <h1 class="entry-title">
+        <a href="https://philtomson.github.io/blog/2014-05-29-comparing-a-machine-learning-algorithm-implemented-in-f#-and-ocaml/">Comparing a Machine Learning algorithm implemented in F# and OCaml</a>
+    </h1>
+</header>
+
+
+        <div class="entry-content">
+          
+          
+          
+          
+          
+
+<p>(UPDATE: please see the <a href="http://philtomson.github.io/blog/2014/05/30/stop-the-presses-ocaml-wins/">next post: Stop the Presses: OCaml wins in terms of speed</a> in which it is shown that there were some serious flaws in my OCaml implementation below. I&rsquo;ll keep this post around for reference.)</p>
+
+<p>I&rsquo;ve been dabbling with OCaml for the last several years and so when I saw a recent Meetup notice about an F# machine learning code dojo being led by <a href="https://github.com/mathias-brandewinder">Mathias Brandewinder</a> within walking distance of my house I thought I&rsquo;d check it out. I&rsquo;m one of those Linux guys who tends to eschew IDEs, prefers to use vim, and considers .NET to be some very foreign territory. F# is based on OCaml, so I figured I&rsquo;d have a bit of a headstart in the language area even if I haven&rsquo;t done any .NET development.</p>
+
+<p>Also, I was curious as I had been hearing rumors on twitter that F# programs were running on Mono faster than the equivalent OCaml versions.  I was also taking Andrew Ng&rsquo;s Coursera Machine Learning course so the timing seemed good. So I loaded up <a href="http://www.mono-project.com/Main_Page">mono</a>, <a href="http://monodevelop.com/">monodevelop</a> and F#. As it turns out none of it worked on the day of the dojo, so I looked on with someone with a Windows laptop and Visual Studio.</p>
+
+<p>The code dojo itself was a great way of learning F#. Check out Mathias&rsquo; <a href="https://github.com/c4fsharp/Dojo-Digits-Recognizer">Digits Recognizer code Dojo code and instructions</a> which in turn was based on <a href="http://www.kaggle.com/c/digit-recognizer">a Kaggle Machine Learning challenge</a>.
+The task was to implement a <a href="http://en.wikipedia.org/wiki/K-nearest_neighbors_algorithm">k-NN</a> (K Nearest Neighbor; in this case K=1) algorithm for recognizing handwritten digits from a dataset that was provided: A training set of 5000 labeled examples and a validation set of 500 labeled examples. Each digit example is a set of 28X28 grayscale pixels (784 integer values from 0 to 255).
+We wrote a classifier that reads in the training set and then compares each of the 500 validation samples against those 5000 training exmples and returns the label associated with the closest match (the vector with the shortest distance from a training example). k-NN is one of the simplest machine learning algorithms, even so, we were able to get a 94.4% accuracy rate.</p>
+
+<p>After the Dojo, I spent some time getting Monodevelop and F# running on my Ubuntu 12.04 laptop. Turns out I needed to get Monodevelop 4.0 (built from source) and F# 3.0 (initially tried F# 3.1, but Monodevelop 4.0 wasn&rsquo;t happy with that version). Then I set about reimplementing the algorithm in F# and after I got that working I reimplemented the same algorithm in OCaml.</p>
+
+<p>Here&rsquo;s my F# implementation:</p>
+
+<div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">58
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#66d9ef">module</span> classifyDigits<span style="color:#f92672">.</span><span style="color:#a6e22e">Main</span>
+  
+<span style="color:#66d9ef">open</span> <span style="color:#a6e22e">System</span>
+<span style="color:#66d9ef">open</span> System.<span style="color:#a6e22e">IO</span>
+
+<span style="color:#66d9ef">type</span> <span style="color:#a6e22e">LabelPixels</span> <span style="color:#f92672">=</span> <span style="color:#f92672">{</span> <span style="color:#a6e22e">Label</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span><span style="color:#f92672">;</span> <span style="color:#a6e22e">Pixels</span><span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span>[] <span style="color:#f92672">}</span>
+<span style="color:#66d9ef">let</span> slurp_file file <span style="color:#f92672">=</span> 
+   File.<span style="color:#a6e22e">ReadAllLines</span><span style="color:#f92672">(</span>file<span style="color:#f92672">).[</span>1<span style="color:#f92672">..]</span> 
+   <span style="color:#f92672">|&gt;</span> Array.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> line <span style="color:#f92672">-&gt;</span> line<span style="color:#f92672">.</span><span style="color:#a6e22e">Split</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#39;,&#39;</span><span style="color:#f92672">))</span>  
+   <span style="color:#f92672">|&gt;</span> Array.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> numline <span style="color:#f92672">-&gt;</span> Array.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> <span style="color:#f92672">(</span>x<span style="color:#f92672">:</span><span style="color:#66d9ef">string</span><span style="color:#f92672">)</span> <span style="color:#f92672">-&gt;</span> Convert.<span style="color:#a6e22e">ToInt32</span><span style="color:#f92672">(</span>x<span style="color:#f92672">))</span> numline<span style="color:#f92672">)</span>    
+   <span style="color:#f92672">|&gt;</span> Array.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> line <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span> <span style="color:#a6e22e">Label</span><span style="color:#f92672">=</span> line<span style="color:#f92672">.[</span>0<span style="color:#f92672">];</span> <span style="color:#a6e22e">Pixels</span><span style="color:#f92672">=</span>line<span style="color:#f92672">.[</span>1<span style="color:#f92672">..]</span> <span style="color:#f92672">})</span>
+
+<span style="color:#f92672">//</span>load the trainingsample  
+<span style="color:#66d9ef">let</span> trainingset <span style="color:#f92672">=</span> slurp_file<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/home/phil/devel/f_sharp/Dojo-Digits-Recognizer/Dojo/trainingsample.csv&#34;</span><span style="color:#f92672">)</span> 
+ 
+<span style="color:#f92672">//</span>  <span style="color:#a6e22e">COMPUTING</span> <span style="color:#a6e22e">DISTANCES</span>
+ 
+<span style="color:#f92672">//</span> <span style="color:#a6e22e">We</span> need <span style="color:#66d9ef">to</span> compute the distance between images
+<span style="color:#f92672">//</span> <span style="color:#a6e22e">Math</span> reminder<span style="color:#f92672">:</span> the euclidean distance is
+<span style="color:#f92672">//</span> distance <span style="color:#f92672">[</span> x1<span style="color:#f92672">;</span> y1<span style="color:#f92672">;</span> z1 <span style="color:#f92672">]</span> <span style="color:#f92672">[</span> x2<span style="color:#f92672">;</span> y2<span style="color:#f92672">;</span> z2 <span style="color:#f92672">]</span> <span style="color:#f92672">=</span> 
+<span style="color:#f92672">//</span> sqrt<span style="color:#f92672">((</span>x1<span style="color:#f92672">-</span>x2<span style="color:#f92672">)*(</span>x1<span style="color:#f92672">-</span>x2<span style="color:#f92672">)</span> <span style="color:#f92672">+</span> <span style="color:#f92672">(</span>y1<span style="color:#f92672">-</span>y2<span style="color:#f92672">)*(</span>y1<span style="color:#f92672">-</span>y2<span style="color:#f92672">)</span> <span style="color:#f92672">+</span> <span style="color:#f92672">(</span>z1<span style="color:#f92672">-</span>z2<span style="color:#f92672">)*(</span>z1<span style="color:#f92672">-</span>z2<span style="color:#f92672">))</span>
+
+<span style="color:#66d9ef">let</span> distance <span style="color:#f92672">(</span>p1<span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span>[]<span style="color:#f92672">)</span> <span style="color:#f92672">(</span>p2<span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span>[]<span style="color:#f92672">)</span> <span style="color:#f92672">=</span> 
+  Math.<span style="color:#a6e22e">Sqrt</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">float</span><span style="color:#f92672">(</span>Array.sum <span style="color:#f92672">(</span>Array.map2 <span style="color:#f92672">(</span> <span style="color:#66d9ef">fun</span> a b <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">(</span>pown <span style="color:#f92672">(</span>a<span style="color:#f92672">-</span>b<span style="color:#f92672">)</span> 2<span style="color:#f92672">))</span> p1 p2<span style="color:#f92672">)</span> <span style="color:#f92672">))</span>
+ 
+ 
+<span style="color:#f92672">//</span>  <span style="color:#a6e22e">WRITING</span> <span style="color:#a6e22e">THE</span> <span style="color:#a6e22e">CLASSIFIER</span> <span style="color:#a6e22e">FUNCTION</span>
+ 
+<span style="color:#f92672">//</span> <span style="color:#a6e22e">We</span> are now ready <span style="color:#66d9ef">to</span> write a classifier <span style="color:#66d9ef">function</span><span style="color:#f92672">!</span>
+<span style="color:#f92672">//</span> <span style="color:#a6e22e">The</span> classifier should take a set <span style="color:#66d9ef">of</span> pixels
+<span style="color:#f92672">//</span> <span style="color:#f92672">(</span>an <span style="color:#66d9ef">array</span> <span style="color:#66d9ef">of</span> ints<span style="color:#f92672">)</span> <span style="color:#66d9ef">as</span> an input<span style="color:#f92672">,</span> search <span style="color:#66d9ef">for</span> the
+<span style="color:#f92672">//</span> closest example <span style="color:#66d9ef">in</span> our sample<span style="color:#f92672">,</span> <span style="color:#f92672">and</span> predict
+<span style="color:#f92672">//</span> the <span style="color:#66d9ef">value</span> <span style="color:#66d9ef">of</span> that closest element<span style="color:#f92672">.</span>
+ 
+<span style="color:#66d9ef">let</span> classify <span style="color:#f92672">(</span>pixels<span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span>[]<span style="color:#f92672">)</span> <span style="color:#f92672">=</span>
+  fst <span style="color:#f92672">(</span>trainingset <span style="color:#f92672">|&gt;</span> Array.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> x <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">(</span>x<span style="color:#f92672">.</span><span style="color:#a6e22e">Label</span><span style="color:#f92672">,</span> <span style="color:#f92672">(</span>distance pixels x<span style="color:#f92672">.</span><span style="color:#a6e22e">Pixels</span> <span style="color:#f92672">)</span> <span style="color:#f92672">))</span>
+                   <span style="color:#f92672">|&gt;</span> Array.minBy <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> x <span style="color:#f92672">-&gt;</span> snd x <span style="color:#f92672">))</span>
+ 
+<span style="color:#f92672">//</span> <span style="color:#a6e22e">EVALUATING</span> <span style="color:#a6e22e">THE</span> <span style="color:#a6e22e">MODEL</span> <span style="color:#a6e22e">AGAINST</span> <span style="color:#a6e22e">VALIDATION</span> <span style="color:#a6e22e">DATA</span>
+ 
+<span style="color:#f92672">//</span> <span style="color:#a6e22e">Now</span> that we have a classifier<span style="color:#f92672">,</span> we need <span style="color:#66d9ef">to</span> check
+<span style="color:#f92672">//</span> how good it is<span style="color:#f92672">.</span> 
+<span style="color:#f92672">//</span> <span style="color:#a6e22e">This</span> is where the 2nd file<span style="color:#f92672">,</span> validationsample<span style="color:#f92672">.</span>csv<span style="color:#f92672">,</span>
+<span style="color:#f92672">//</span> comes <span style="color:#66d9ef">in</span> handy<span style="color:#f92672">.</span> 
+<span style="color:#f92672">//</span> <span style="color:#a6e22e">For</span> each <span style="color:#a6e22e">Example</span> <span style="color:#66d9ef">in</span> the 2nd file<span style="color:#f92672">,</span>
+<span style="color:#f92672">//</span> we know what the true <span style="color:#a6e22e">Label</span> is<span style="color:#f92672">,</span> so we can compare
+<span style="color:#f92672">//</span> that <span style="color:#66d9ef">value</span> <span style="color:#66d9ef">with</span> what the classifier says<span style="color:#f92672">.</span>
+<span style="color:#f92672">//</span> <span style="color:#a6e22e">You</span> could now check <span style="color:#66d9ef">for</span> each 500 example <span style="color:#66d9ef">in</span> that file
+<span style="color:#f92672">//</span> whether your classifier returns the correct answer<span style="color:#f92672">,</span>
+<span style="color:#f92672">//</span> <span style="color:#f92672">and</span> compute the <span style="color:#f92672">%</span> correctly predicted<span style="color:#f92672">.</span>
+
+
+<span style="color:#66d9ef">let</span> <span style="color:#f92672">_</span> <span style="color:#f92672">=</span> 
+    Console.<span style="color:#a6e22e">WriteLine</span><span style="color:#f92672">(</span><span style="color:#e6db74">&#34;start...&#34;</span><span style="color:#f92672">)</span>
+    <span style="color:#66d9ef">let</span> validationsample <span style="color:#f92672">=</span> slurp_file<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;/home/phil/devel/f_sharp/Dojo-Digits-Recognizer/Dojo/validationsample.csv&#34;</span><span style="color:#f92672">)</span> 
+    <span style="color:#66d9ef">let</span> num_correct <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>validationsample <span style="color:#f92672">|&gt;</span> Array.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> p <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>classify p<span style="color:#f92672">.</span><span style="color:#a6e22e">Pixels</span> <span style="color:#f92672">)</span> <span style="color:#f92672">=</span> p<span style="color:#f92672">.</span><span style="color:#a6e22e">Label</span> <span style="color:#66d9ef">then</span> 1 <span style="color:#66d9ef">else</span> 0<span style="color:#f92672">)</span>
+                                        <span style="color:#f92672">|&gt;</span> Array.sum<span style="color:#f92672">)</span> 
+    Printf.printf <span style="color:#e6db74">&#34;Percentage correct:%f</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">((</span><span style="color:#66d9ef">float</span><span style="color:#f92672">(</span>num_correct<span style="color:#f92672">)/</span> <span style="color:#f92672">(</span><span style="color:#66d9ef">float</span><span style="color:#f92672">(</span>Array.length validationsample<span style="color:#f92672">)))*</span>100<span style="color:#f92672">.</span>0<span style="color:#f92672">)</span></code></pre></td></tr></table>
+</div>
+</div>
+
+<p>Timing when running this on my Dell XPS 13 (i7 Haswell, 8GB RAM):</p>
+
+<pre><code>real        0m22.180s
+user        0m22.253s
+sys         0m0.116s
+</code></pre>
+
+<p>And the OCaml implementation:</p>
+
+<p><div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 7
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 8
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79"> 9
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">10
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">11
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">12
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">13
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">14
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">15
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">16
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">17
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">18
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">19
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">20
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">21
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">22
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">23
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">24
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">25
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">26
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">27
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">28
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">29
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">30
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">31
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">32
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">33
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">34
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">35
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">36
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">37
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">38
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">39
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">40
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">41
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">42
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">43
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">44
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">45
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">46
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">47
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">48
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">49
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">50
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">51
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">52
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">53
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">54
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">55
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">56
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">57
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">58
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">59
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">60
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">61
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">62
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">63
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">64
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">65
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">66
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">67
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">68
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">69
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">70
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">71
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">72
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">73
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">74
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">75
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">76
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#75715e">(* OCaml version
+</span><span style="color:#75715e">   compile with:
+</span><span style="color:#75715e">    ocamlopt str.cmxa -o classifyDigits classifyDigits.ml 
+</span><span style="color:#75715e">*)</span>
+
+<span style="color:#66d9ef">let</span> read_lines name <span style="color:#f92672">:</span> <span style="color:#66d9ef">string</span> <span style="color:#66d9ef">list</span> <span style="color:#f92672">=</span>
+  <span style="color:#66d9ef">let</span> ic <span style="color:#f92672">=</span> open_in name <span style="color:#66d9ef">in</span>
+  <span style="color:#66d9ef">let</span> try_read () <span style="color:#f92672">=</span>
+    <span style="color:#66d9ef">try</span> <span style="color:#a6e22e">Some</span> <span style="color:#f92672">(</span>input_line ic<span style="color:#f92672">)</span> <span style="color:#66d9ef">with</span> <span style="color:#a6e22e">End_of_file</span> <span style="color:#f92672">-&gt;</span> <span style="color:#a6e22e">None</span> <span style="color:#66d9ef">in</span>
+  <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">rec</span> loop acc <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> try_read () <span style="color:#66d9ef">with</span>
+    <span style="color:#f92672">|</span> <span style="color:#a6e22e">Some</span> s <span style="color:#f92672">-&gt;</span> loop <span style="color:#f92672">(</span>s <span style="color:#f92672">::</span> acc<span style="color:#f92672">)</span>
+    <span style="color:#f92672">|</span> <span style="color:#a6e22e">None</span> <span style="color:#f92672">-&gt;</span> close_in ic<span style="color:#f92672">;</span> List.rev acc <span style="color:#66d9ef">in</span>
+  loop []
+  
+<span style="color:#66d9ef">type</span> labelPixels <span style="color:#f92672">=</span> <span style="color:#f92672">{</span> label<span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span><span style="color:#f92672">;</span> pixels<span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">list</span> <span style="color:#f92672">}</span>
+<span style="color:#66d9ef">let</span> slurp_file file <span style="color:#f92672">=</span> 
+   List.tl <span style="color:#f92672">(</span>read_lines file<span style="color:#f92672">)</span> 
+   <span style="color:#f92672">|&gt;</span> List.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> line <span style="color:#f92672">-&gt;</span> Str.split <span style="color:#f92672">(</span>Str.regexp <span style="color:#e6db74">&#34;,&#34;</span><span style="color:#f92672">)</span> line <span style="color:#f92672">)</span>  
+   <span style="color:#f92672">|&gt;</span> List.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> numline <span style="color:#f92672">-&gt;</span> List.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> <span style="color:#f92672">(</span>x<span style="color:#f92672">:</span><span style="color:#66d9ef">string</span><span style="color:#f92672">)</span> <span style="color:#f92672">-&gt;</span> int_of_string x<span style="color:#f92672">)</span> numline<span style="color:#f92672">)</span>    
+   <span style="color:#f92672">|&gt;</span> List.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> line <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">{</span> label<span style="color:#f92672">=</span> <span style="color:#f92672">(</span>List.hd line<span style="color:#f92672">);</span> pixels<span style="color:#f92672">=(</span>List.tl line<span style="color:#f92672">)</span> <span style="color:#f92672">})</span>
+  
+<span style="color:#66d9ef">let</span> trainingset <span style="color:#f92672">=</span> slurp_file<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;./trainingsample.csv&#34;</span><span style="color:#f92672">)</span> 
+
+<span style="color:#75715e">(* 
+</span><span style="color:#75715e">// COMPUTING DISTANCES
+</span><span style="color:#75715e"> 
+</span><span style="color:#75715e">// We need to compute the distance between images
+</span><span style="color:#75715e">// Math reminder: the euclidean distance is
+</span><span style="color:#75715e">// distance [ x1; y1; z1 ] [ x2; y2; z2 ] = 
+</span><span style="color:#75715e">// sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2))
+</span><span style="color:#75715e">*)</span>
+
+<span style="color:#66d9ef">let</span> list_sum lst <span style="color:#f92672">=</span> List.fold_left <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> x acc <span style="color:#f92672">-&gt;</span> x<span style="color:#f92672">+.</span>acc<span style="color:#f92672">)</span> 0<span style="color:#f92672">.</span>0 lst
+
+<span style="color:#66d9ef">let</span> distance <span style="color:#f92672">(</span>p1<span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">list</span><span style="color:#f92672">)</span> <span style="color:#f92672">(</span>p2<span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">list</span><span style="color:#f92672">)</span> <span style="color:#f92672">=</span> 
+  sqrt <span style="color:#f92672">(</span>list_sum <span style="color:#f92672">(</span>List.map2 <span style="color:#f92672">(</span> <span style="color:#66d9ef">fun</span> a b <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">(</span>float_of_int<span style="color:#f92672">(</span>a<span style="color:#f92672">-</span>b<span style="color:#f92672">)**</span>2<span style="color:#f92672">.</span>0<span style="color:#f92672">))</span> p1 p2<span style="color:#f92672">)</span> <span style="color:#f92672">)</span>
+ 
+<span style="color:#75715e">(* 
+</span><span style="color:#75715e">// WRITING THE CLASSIFIER FUNCTION
+</span><span style="color:#75715e"> 
+</span><span style="color:#75715e">// We are now ready to write a classifier function!
+</span><span style="color:#75715e">// The classifier should take a set of pixels
+</span><span style="color:#75715e">// (an array of ints) as an input, search for the
+</span><span style="color:#75715e">// closest example in our sample, and predict
+</span><span style="color:#75715e">// the value of that closest element.
+</span><span style="color:#75715e">*)</span>
+
+<span style="color:#66d9ef">let</span> minBy f lst  <span style="color:#f92672">=</span> 
+  <span style="color:#66d9ef">let</span> smallest <span style="color:#f92672">=</span> ref <span style="color:#f92672">(</span>List.hd lst<span style="color:#f92672">)</span> <span style="color:#66d9ef">in</span>
+  List.iter <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> x <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>f x<span style="color:#f92672">)</span> <span style="color:#f92672">&lt;</span> <span style="color:#f92672">(</span>f <span style="color:#f92672">!</span>smallest<span style="color:#f92672">)</span> <span style="color:#66d9ef">then</span> smallest <span style="color:#f92672">:=</span> x
+                          <span style="color:#f92672">)</span> <span style="color:#f92672">(</span>List.tl lst<span style="color:#f92672">)</span> <span style="color:#f92672">;</span>
+  <span style="color:#f92672">!</span>smallest <span style="color:#f92672">;;</span>
+                        
+
+<span style="color:#66d9ef">let</span> classify <span style="color:#f92672">(</span>pixels<span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">list</span><span style="color:#f92672">)</span> <span style="color:#f92672">=</span>
+  fst <span style="color:#f92672">((</span>List.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> <span style="color:#f92672">(</span>x<span style="color:#f92672">:</span> labelPixels<span style="color:#f92672">)</span> <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">(</span>x<span style="color:#f92672">.</span>label<span style="color:#f92672">,</span> <span style="color:#f92672">(</span>distance pixels x<span style="color:#f92672">.</span>pixels<span style="color:#f92672">)</span> <span style="color:#f92672">))</span> trainingset<span style="color:#f92672">)</span>
+       <span style="color:#f92672">|&gt;</span> minBy <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> x  <span style="color:#f92672">-&gt;</span> snd x<span style="color:#f92672">)</span>  <span style="color:#f92672">)</span>
+ 
+<span style="color:#75715e">(*
+</span><span style="color:#75715e">// EVALUATING THE MODEL AGAINST VALIDATION DATA
+</span><span style="color:#75715e"> 
+</span><span style="color:#75715e">// Now that we have a classifier, we need to check
+</span><span style="color:#75715e">// how good it is. 
+</span><span style="color:#75715e">// This is where the 2nd file, validationsample.csv,
+</span><span style="color:#75715e">// comes in handy. 
+</span><span style="color:#75715e">// For each Example in the 2nd file,
+</span><span style="color:#75715e">// we know what the true Label is, so we can compare
+</span><span style="color:#75715e">// that value with what the classifier says.
+</span><span style="color:#75715e">// You could now check for each 500 example in that file
+</span><span style="color:#75715e">// whether your classifier returns the correct answer,
+</span><span style="color:#75715e">// and compute the % correctly predicted.
+</span><span style="color:#75715e">*)</span>
+
+<span style="color:#66d9ef">let</span> validationsample <span style="color:#f92672">=</span> slurp_file<span style="color:#f92672">(</span><span style="color:#e6db74">&#34;./validationsample.csv&#34;</span><span style="color:#f92672">)</span> 
+<span style="color:#66d9ef">let</span> num_correct <span style="color:#f92672">=</span> <span style="color:#f92672">(</span>validationsample <span style="color:#f92672">|&gt;</span> List.map <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> p <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>classify p<span style="color:#f92672">.</span>pixels <span style="color:#f92672">)</span> <span style="color:#f92672">=</span> p<span style="color:#f92672">.</span>label <span style="color:#66d9ef">then</span> 1<span style="color:#f92672">.</span> <span style="color:#66d9ef">else</span> 0<span style="color:#f92672">.)</span> <span style="color:#f92672">|&gt;</span> list_sum<span style="color:#f92672">)</span> 
+<span style="color:#66d9ef">let</span> <span style="color:#f92672">_</span> <span style="color:#f92672">=</span> Printf.printf <span style="color:#e6db74">&#34;Percentage correct:%f</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span> <span style="color:#f92672">(((</span>num_correct<span style="color:#f92672">)/.</span> <span style="color:#f92672">(</span>float_of_int<span style="color:#f92672">(</span>List.length validationsample<span style="color:#f92672">)))*.</span>100<span style="color:#f92672">.</span>0<span style="color:#f92672">)</span></code></pre></td></tr></table>
+</div>
+</div></p>
+
+<p>The code is very similar. The OCaml version is a bit longer because I needed to implement some functions that are built into the F# library, specifically, <em>minBy</em> (<em>Array.minBy</em> is built in to thd F# standard lib), <em>list_sum</em> (<em>Array.sum</em> is the F# builtin function) and <em>read_lines</em> (<em>File.ReadAllLines</em> is the F# builtin). One difference that could possibly effect performance: The F# version reads the data into *Array*s whereas the OCaml version reads the data into *List*s. The OCaml version was just easier to read into a <em>List</em> and OCaml&rsquo;s <em>List</em> module has a <em>map2</em> function whereas OCaml&rsquo;s <em>Array</em> module does not (F# apparently has a <em>map2</em> for both <em>Array</em> and <em>List</em>).</p>
+
+<p>(EDIT: But as it turns out, using a List here instead of an Array is probably responsible for about <sup>1</sup>&frasl;<sub>2</sub> of the performance difference between the F# and the OCaml version. See <a href="(http://philtomson.github.io/blog/2014/05/30/stop-the-presses-ocaml-wins/)">the update</a></p>
+
+<p>I was surprised how much less performant the OCaml version was:</p>
+
+<pre><code>real    0m47.311s
+user    0m46.881s
+sys     0m0.135s
+</code></pre>
+
+<p>The F# implementation was slightly more than twice as fast o_O.</p>
+
+<p>Next, I recalled from the dojo that it&rsquo;s very easy to parallelize the maps in F#; instead of <em>Array.map</em> you use <em>Array.parallel.map</em>. So after a couple of edits to add parallel maps, I rebuilt and ran with the following time:</p>
+
+<pre><code>real    0m16.400s
+user    0m47.135s
+sys     0m0.240s
+</code></pre>
+
+<p>So after that very simple change the F# version was very nearly 3X faster than the OCaml version. And in <em>top</em> I could see that the CPU usage was up to 360% as it ran.</p>
+
+<p>Ah, but what about OCaml&rsquo;s <a href="https://github.com/rdicosmo/parmap">Parmap</a>?
+I modified my OCaml version to use Parmap&hellip; but it took a lot longer to get it working than parallelizing the F# version. Probably about 30 minutes by the time I got it figured out (including figuring out how to compile it).</p>
+
+<p>Here&rsquo;s the OCaml version of the <em>classify</em> function and <em>num_correct</em> that uses Parmap:</p>
+
+<p><div class="highlight"><div style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4">
+<table style="border-spacing:0;padding:0;margin:0;border:0;width:auto;overflow:auto;display:block;"><tr><td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">1
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">2
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">3
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">4
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">5
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">6
+</span><span style="margin-right:0.4em;padding:0 0.4em 0 0.4em;color:#7c7c79">7
+</span></code></pre></td>
+<td style="vertical-align:top;padding:0;margin:0;border:0;">
+<pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#66d9ef">let</span> classify <span style="color:#f92672">(</span>pixels<span style="color:#f92672">:</span> <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">list</span><span style="color:#f92672">)</span> <span style="color:#f92672">=</span>
+  <span style="color:#66d9ef">let</span> label_dist <span style="color:#f92672">=</span> Parmap.parmap <span style="color:#f92672">~</span>chunksize<span style="color:#f92672">:</span>50 <span style="color:#f92672">~</span>ncores<span style="color:#f92672">:</span>4 <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> x <span style="color:#f92672">-&gt;</span> <span style="color:#f92672">(</span>x<span style="color:#f92672">.</span>label<span style="color:#f92672">,</span> <span style="color:#f92672">(</span>distance pixels x<span style="color:#f92672">.</span>pixels<span style="color:#f92672">)</span> <span style="color:#f92672">))</span> <span style="color:#f92672">(</span>Parmap.<span style="color:#a6e22e">L</span> trainingset<span style="color:#f92672">)</span> <span style="color:#66d9ef">in</span>
+  <span style="color:#66d9ef">let</span> min <span style="color:#f92672">=</span> minBy <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> x y <span style="color:#f92672">-&gt;</span> compare <span style="color:#f92672">(</span>snd x<span style="color:#f92672">)</span> <span style="color:#f92672">(</span>snd y<span style="color:#f92672">))</span> label_dist <span style="color:#66d9ef">in</span>
+  fst min
+
+<span style="color:#66d9ef">let</span> num_correct <span style="color:#f92672">=</span> 
+  <span style="color:#f92672">(</span>Parmap.<span style="color:#a6e22e">L</span> validationsample<span style="color:#f92672">)</span> <span style="color:#f92672">|&gt;</span> Parmap.parmap <span style="color:#f92672">~</span>ncores<span style="color:#f92672">:</span>4 <span style="color:#f92672">(</span><span style="color:#66d9ef">fun</span> p <span style="color:#f92672">-&gt;</span> <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>classify p<span style="color:#f92672">.</span>pixels <span style="color:#f92672">)</span> <span style="color:#f92672">=</span> p<span style="color:#f92672">.</span>label <span style="color:#66d9ef">then</span> 1<span style="color:#f92672">.</span> <span style="color:#66d9ef">else</span> 0<span style="color:#f92672">.)</span> <span style="color:#f92672">|&gt;</span> list_sum </code></pre></td></tr></table>
+</div>
+</div>
+Notice that you have to tell it how many cores you have.</p>
+
+<p>After I got it to compile I ran it with much anticipation&hellip;</p>
+
+<pre><code>real    1m43.140s
+user    5m38.809s
+sys     0m42.811s
+</code></pre>
+
+<p>&hellip; over twice as slow as the original OCaml implementation.
+I noticed in <em>top</em> that this version launched 4 different <em>classifyDigitPar</em> processes so I&rsquo;m guessing that it uses sockets to communicate between the processes. For this particular problem that doesn&rsquo;t appear to be effective. Perhaps it would be for a longer running example, but I&rsquo;m not sure. F# certainly wins in the parallelization department.</p>
+
+<h3 id="observations">Observations</h3>
+
+<p>Other than performance (where F# on Mono seems to win handily) I noticed the following:</p>
+
+<ol>
+<li>The Array slicing syntax in F# is quite nice.</li>
+<li>F#&rsquo;s standard library is just more comprehensive. I could have probably used Janestreet&rsquo;s <em>Core</em> library for OCaml which is quite comprehensive, but I wanted to stick with the standard library for both.</li>
+<li>Monodevelop has a <em>vi</em> editing mode. It&rsquo;s kind of ok. But it&rsquo;s missing a lot of keybindings that you&rsquo;d have in native vi.</li>
+<li>I have no idea what F#&rsquo;s (or Monodevelop&rsquo;s) equavilent to <em>opam</em> is. I&rsquo;m guessing OCaml wins in the package management department.</li>
+<li>F#&rsquo;s polymorphic math operators were nice (no need for <em>+.</em>, etc.).</li>
+</ol>
+
+<p>You can find the code above in <a href="https://github.com/philtomson/ClassifyDigits">my github</a></p>
+
+<h3 id="next-time">Next Time</h3>
+
+<p>I want to implement the algorithm in <a href="http://julialang.org/">Julia</a>. I&rsquo;m going to guess that Julia&rsquo;s vectorization support means that it will beat both OCaml and F#.</p>
+
+        </div>
+        
+
+<footer>
+  <p class="meta">
+    <span class="byline author vcard">Posted by <span class="fn"></span></span>
+    
+    <time>May 29, 2014</time>
+    
+    </span>
+  </p>
+
+  
+  
+
+  
+
+  <p class="meta">
+    
+        <a class="basic-alignment left" href="https://philtomson.github.io/blog/2014-05-14-drawing-happy-little-trees-tree-meditation-number-2/" title="Drawing Happy Little Trees: tree meditation number 2">Drawing Happy Little Trees: tree meditation number 2</a>
+    
+
+    
+      <a class="basic-alignment right" href="https://philtomson.github.io/blog/2014-05-30-stop-the-presses-ocaml-wins/" title="stop the presses ocaml wins">stop the presses ocaml wins</a>
+    
+  </p>
+  
+    
+      <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'mylittlegardenofcode';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+  
+</footer>
+
+      </article>
+    </div>
+    
+
+<aside class="sidebar thirds">
+  <section class="first odd">
+
+    
+
+    <p>
+      
+    </p>
+  </section>
+
+
+
+  
+  <ul class="sidebar-nav">
+    <li class="sidebar-nav-item">
+      <a target="_blank" href="https://github.com/philtomson/" title="https://github.com/philtomson/"><i class="fa fa-github fa-3x"></i></a>
+      
+      
+      
+      
+         
+      
+      
+      <a target="_blank" href="https://stackoverflow.com/users/46190/aneccodeal" title="https://stackoverflow.com/users/46190/aneccodeal"><i class="fa fa-stack-overflow fa-3x"></i></a>
+      
+      
+      
+      
+      
+
+    
+    
+    </li>
+  </ul>
+
+  
+
+  
+
+  
+  
+  
+    
+      <section class="even">
+        <h1>Recent Posts</h1>
+        <ul id="recent_posts">
+          
+          
+            
+              <li class="post">
+                <a href="/blog/2018-06-11-migrated-blog-from-octopress-to-hugo/">Migrated blog from Octopress to Hugo</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-06-testing-mathjax/">Testing MathJax</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-02-funemployment/">FUNemployment</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-09-10-some-notes-on-building-and-running-mirage-unikernels-on-cubieboard2/">Some notes on building and running mirage unikernels on Cubieboard2</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/">Cooperative Concurrency in OCaml: A Core.Std.Async example</a>
+              </li>
+            
+          
+        </ul>
+      </section>
+    
+  
+</aside>
+
+  </div>
+</div>
+
+<footer role="contentinfo">
+  <p>Copyright &copy; 2018  - <a href="https://philtomson.github.io/license/">License</a> -
+  <span class="credit">Powered by <a target="_blank" href="https://gohugo.io">Hugo</a> and <a target="_blank" href="https://github.com/parsiya/hugo-octopress/">Hugo-Octopress</a> theme.
+</p>
+
+</footer>
+
+
+
+
+
+
+</body>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+</html>
+
+

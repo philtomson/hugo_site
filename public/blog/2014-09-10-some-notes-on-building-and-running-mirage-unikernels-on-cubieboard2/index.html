@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width,minimum-scale=1,maximum-scale=1">
+
+  
+    
+    
+      <link href="/css/fonts.css" rel="stylesheet" type="text/css">
+    
+  
+
+  
+  <title>Some notes on building and running mirage unikernels on Cubieboard2</title>
+
+  
+  
+  <link rel="stylesheet" href="/css/hugo-octopress.css">
+
+  
+  
+
+  
+    <link rel="stylesheet" href="/css/fork-awesome.min.css">
+  
+
+  
+  <link href="https://philtomson.github.io/favicon.png" rel="icon">
+
+  
+  
+  
+
+  
+
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+
+  <meta name="author" content="">
+
+  
+  <meta name="generator" content="Hugo 0.40.1" />
+
+  
+  
+
+  
+  
+
+</head>
+<body>
+
+
+<header role="banner"><hgroup>
+  
+  <h1><a href="https://philtomson.github.io/">My Little Garden of Code</a></h1>
+    <h2></h2>
+</hgroup></header>
+
+
+<nav role="navigation">
+<fieldset class="mobile-nav">
+  
+  <select onchange="location = this.value;">
+    <option value="">Navigate…</option>
+      
+        <option value="https://philtomson.github.io/">» Home</option>
+      
+
+  </select>
+</fieldset>
+
+
+<ul class="main-navigation">
+  
+  
+    
+      <li><a href="https://philtomson.github.io/" title="Home">Home</a></li>
+    
+  
+</ul>
+
+
+<ul class="subscription">
+  
+
+</ul>
+
+
+</nav>
+
+
+<div id="main">
+  <div id="content">
+    <div>
+      <article class="hentry" role="article">
+
+        
+        
+
+<header>
+    <p class="meta">Sep 10, 2014
+         - 5 minute read 
+         - <a href="https://philtomson.github.io/blog/2014-09-10-some-notes-on-building-and-running-mirage-unikernels-on-cubieboard2/#disqus_thread">Comments</a>
+
+        
+        
+        
+            - 
+        
+    </p>
+    <h1 class="entry-title">
+         Some notes on building and running mirage unikernels on Cubieboard2 
+    </h1>
+</header>
+
+
+        <div class="entry-content">
+          
+          
+          
+          
+          <p><em>First a caveat: These notes reflect the state of Mirage as of the date of this post. Mirage is still in heavy development and the instructions here will change (hopefully become simpler) going forward.</em></p>
+
+<p>These are some notes on what I had to do to get a <a href="http://mirageos.org/">Mirage</a> unikernel running under <a href="http://www.xenproject.org/">Xen</a> on a <a href="http://cubieboard.org/">cubieboard2</a>. The intent here is to document some of the gotchyas I ran into.</p>
+
+<p><strong>Installing Xen for ARM on Cubieboard</strong></p>
+
+<p>First download the pre-built img file from: <a href="http://blobs.openmirage.org/cubieboard2.tar">http://blobs.openmirage.org/cubieboard2.tar</a></p>
+
+<p>Extract the img file:</p>
+
+<pre><code>$ tar -xvf cubieboard2.tar
+</code></pre>
+
+<p>For the most part you can follow instructions <a href="https://github.com/mirage/xen-arm-builder">here</a> to copy the cubieboard2.img to a micro SD card, but I&rsquo;ll add a little more detail here.</p>
+
+<p>When you first plug in your empty micro SD card (I have a micro SD to USB adaptor) to your Linux computer you can discover which /dev it&rsquo;s on by issuing:</p>
+
+<pre><code>$ fdisk -l
+</code></pre>
+
+<p>On my machine it showed up at /dev/sdb. Now use dd to copy the cubieboard2.img to the empty micrSD card:</p>
+
+<pre><code>$ dd if=cubieboard2.img of=/dev/sdb
+</code></pre>
+
+<p>After the copy is complete, plug the micro SD card into your Cubuieboard2 and boot it up. It will boot into Linaro Linux (14.04) on DOM0. If you have a USB to TTL serial cable (I got one from AdaFruit here: <a href="http://www.adafruit.com/products/954">http://www.adafruit.com/products/954</a> ) you can plug that into your cubieboard2 (white to TX, green to RX, black to GND - don&rsquo;t plug in the red wire to VCC).  Connect the other side of the cable to your Linux machine and then you can watch the cubieboard boot up by running:</p>
+
+<pre><code>$ sudo screen /dev/ttyUSB0 115200
+</code></pre>
+
+<p>(NOTE: I&rsquo;m running Fedora 20, not sure, but other distros may need a different device in place of /dev/ttyUSB0)</p>
+
+<p>The cubieboard will get an address on your network using DHCP. Ater it finishes booting you can log in with username: mirage    password: mirage and then run ifconfig to see what address has been assigned to it.</p>
+
+<p>If you don&rsquo;t have a USB to TTL serial cable you can check to see what address was assigned to the cubieboard by first (prior to powering up the cubieboard) issuing:</p>
+
+<pre><code>$  sudo arp-scan -I p4p1 192.168.1.0/16
+</code></pre>
+
+<p>(substitute your subnet for 192.168.1.0 if that isn&rsquo;t the subnet of the network you&rsquo;re on)</p>
+
+<p>Note the devices attached to each address. Now power up your cubieboard, wait a couple of minutes and then reissue the arp command to see what new address has been added - the new address will be the address assigned by DHCP to your cubieboard.</p>
+
+<p><strong>Install mirage on the Cubieboard</strong></p>
+
+<p>Now that your cubieboard has booted you need to install mirage. Fortunately, the cubieboard2.img already comes with OCaml 4.01 and opam installed.  Now install mirage:</p>
+
+<pre><code>$ opam init
+$ opam install mirage-xen-minios
+$ opam pin mirage https://github.com/talex5/mirage.git#link_c_stubs
+$ opam pin mirage-xen https://github.com/mirage/mirage-platform
+$ opam pin tcpip https://github.com/talex5/mirage-tcpip.git#checksum
+$ opam install mirage    
+</code></pre>
+
+<p><strong>Try out a Mirage example</strong></p>
+
+<p>I wanted to try out an example that uses networking on Xen which means that the OCaml TCPIP stack would be used.  There are several examples in the mirage-skeleton repo: <a href="https://github.com/mirage/mirage-skeleton">https://github.com/mirage/mirage-skeleton</a></p>
+
+<p>Now ssh into your cubieboard and clone mirage-skeleton:</p>
+
+<pre><code>$ git clone git@github.com:philtomson/mirage-skeleton.git
+</code></pre>
+
+<p>(Notice that I&rsquo;m pointing you to my mirage-skeleton repo, not the canonical one - I&rsquo;ve made some changes to the stackv4 example config.ml so that you can easily specify DHCP which we&rsquo;ll see a bit later, in the future, those changes will hopefully be in the main mirage-skeleton repo)</p>
+
+<p>Now we&rsquo;ll try out stackv4 which is a simple http server example.</p>
+
+<pre><code>$ cd mirage-skeleton/stackv4
+</code></pre>
+
+<p>Do the mirage configure, but set DHCP so that Mirage will create a main.ml file that uses DHCP instead of getting the hardcoded 10.0.0.2 (hardcoded in mirage):</p>
+
+<pre><code>$ DHCP=1 mirage configure --xen
+$ mirage build
+</code></pre>
+
+<p>Now you will have run into a problem (at least as of this date, hopefully this will be fixed in the near future). You&rsquo;ll see this error:</p>
+
+<pre><code>stackv4      ld: cannot find -lpthread
+stackv4      ld: cannot find -lcrypto
+stackv4      ld: cannot find -lssl
+stackv4      make: build Error 1 
+</code></pre>
+
+<p>As it turns out, you don&rsquo;t need those libraries, so edit the Makefile to remove the lines :</p>
+
+<pre><code>-lpthread \
+-lcrypto \
+-lssl \
+</code></pre>
+
+<p>Save the edited Makefile and run (again):</p>
+
+<pre><code>$ mirage build
+$ make run
+</code></pre>
+
+<p>Notice the following message that comes from the <em>make run</em>:</p>
+
+<pre><code>stackv4.xl has been created. _Edit it to add VIFs_ or VBDs
+Then do something similar to: xl create -c stackv4.xl
+</code></pre>
+
+<p>So now you need to edit the stackv4.xl, notice that it already has the following commented line:</p>
+
+<pre><code># vif = [ 'mac=c0:ff:ee:c0:ff:ee,bridge=br0' ]
+</code></pre>
+
+<p>Edit it to remove the comment (#) and get rid of the mac address (I do not know if it is correct and since it possibly isn&rsquo;t, and we don&rsquo;t need it, best to just get rid of it. Make it look like:</p>
+
+<pre><code>vif = [ 'bridge=br0' ]
+</code></pre>
+
+<p>As an aside, where did the <em>br0</em> come from?  It&rsquo;s possible you need something else there. Certainly I&rsquo;ve seen other documents that had another identifier there. In order to figure out what it should be you should run:</p>
+
+<pre><code>$ brctl show
+</code></pre>
+
+<p>The result will be something like:</p>
+
+<pre><code>bridge name bridge id       STP enabled interfaces
+br0     8000.02d908c0a687   no      eth0
+</code></pre>
+
+<p>The bridge name is what you&rsquo;re going to want in the vif line above. In my case the comment matched the output of <em>brctl</em> so no change needed.</p>
+
+<p>And now the moment we&rsquo;ve been waiting for&hellip; start up that unikernel:</p>
+
+<pre><code> sudo  xl create -c stackv4.xl   
+</code></pre>
+
+<p>If all went well, you should see that it reports the address it gets from DHCP:</p>
+
+<pre><code> ...
+ DHCP: offer received: 192.168.1.11
+ ...
+ DHCP: offer 192.168.1.11 255.255.255.0 [192.168.1.1]
+  sg:true gso_tcpv4:true rx_copy:true rx_flip:false smart_poll:false
+ ARP: sending gratuitous from 192.168.1.11
+ DHCP offer received and bound
+ Manager: configuration done
+ IP address: 192.168.1.11
+</code></pre>
+
+<p>Now you can use curl on another machine on your network to see the hello world message:</p>
+
+<pre><code>$ curl http://192.168.1.11
+hello mirage world!
+</code></pre>
+
+<p>And there you have it.</p>
+
+<p><strong>Shutting down the server</strong></p>
+
+<p>To shut down that mirage unikernel server on the cubieboard, issue the following:</p>
+
+<pre><code>$ sudo xl list
+Name                                        ID   Mem VCPUs  State   Time(s)
+Domain-0                                     0   512     2     r-----     194.3
+stackv4                                     11   256     1     -b----       0.1
+</code></pre>
+
+<p><em>stackv4</em> is the one you want to stop (don&rsquo;t stop Domain-0 as that&rsquo;s the Linux instance running in DOM0 of Xen - the one you&rsquo;re typing commands into)</p>
+
+<pre><code>$ sudo xl destroy stackv4
+</code></pre>
+
+        </div>
+        
+
+<footer>
+  <p class="meta">
+    <span class="byline author vcard">Posted by <span class="fn"></span></span>
+    
+    <time>Sep 10, 2014</time>
+    
+    </span>
+  </p>
+
+  
+  
+
+  
+
+  <p class="meta">
+    
+        <a class="basic-alignment left" href="https://philtomson.github.io/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/" title="Cooperative Concurrency in OCaml: A Core.Std.Async example">Cooperative Concurrency in OCaml: A Core.Std.Async example</a>
+    
+
+    
+      <a class="basic-alignment right" href="https://philtomson.github.io/blog/2017-02-02-funemployment/" title="FUNemployment">FUNemployment</a>
+    
+  </p>
+  
+    
+      <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'mylittlegardenofcode';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+  
+</footer>
+
+      </article>
+    </div>
+    
+
+<aside class="sidebar thirds">
+  <section class="first odd">
+
+    
+
+    <p>
+      
+    </p>
+  </section>
+
+
+
+  
+  <ul class="sidebar-nav">
+    <li class="sidebar-nav-item">
+      <a target="_blank" href="https://github.com/philtomson/" title="https://github.com/philtomson/"><i class="fa fa-github fa-3x"></i></a>
+      
+      
+      
+      
+         
+      
+      
+      <a target="_blank" href="https://stackoverflow.com/users/46190/aneccodeal" title="https://stackoverflow.com/users/46190/aneccodeal"><i class="fa fa-stack-overflow fa-3x"></i></a>
+      
+      
+      
+      
+      
+
+    
+    
+    </li>
+  </ul>
+
+  
+
+  
+
+  
+  
+  
+    
+      <section class="even">
+        <h1>Recent Posts</h1>
+        <ul id="recent_posts">
+          
+          
+            
+              <li class="post">
+                <a href="/blog/2018-06-11-migrated-blog-from-octopress-to-hugo/">Migrated blog from Octopress to Hugo</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-06-testing-mathjax/">Testing MathJax</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-02-funemployment/">FUNemployment</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-09-10-some-notes-on-building-and-running-mirage-unikernels-on-cubieboard2/">Some notes on building and running mirage unikernels on Cubieboard2</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/">Cooperative Concurrency in OCaml: A Core.Std.Async example</a>
+              </li>
+            
+          
+        </ul>
+      </section>
+    
+  
+</aside>
+
+  </div>
+</div>
+
+<footer role="contentinfo">
+  <p>Copyright &copy; 2018  - <a href="https://philtomson.github.io/license/">License</a> -
+  <span class="credit">Powered by <a target="_blank" href="https://gohugo.io">Hugo</a> and <a target="_blank" href="https://github.com/parsiya/hugo-octopress/">Hugo-Octopress</a> theme.
+</p>
+
+</footer>
+
+
+
+
+
+
+</body>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+</html>
+
+

@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
+<head>
+  <link href="http://gmpg.org/xfn/11" rel="profile">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+  
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width,minimum-scale=1,maximum-scale=1">
+
+  
+    
+    
+      <link href="/css/fonts.css" rel="stylesheet" type="text/css">
+    
+  
+
+  
+  <title>Cooperative Concurrency in OCaml: A Core.Std.Async example</title>
+
+  
+  
+  <link rel="stylesheet" href="/css/hugo-octopress.css">
+
+  
+  
+
+  
+    <link rel="stylesheet" href="/css/fork-awesome.min.css">
+  
+
+  
+  <link href="https://philtomson.github.io/favicon.png" rel="icon">
+
+  
+  
+  
+
+  
+
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+
+  <meta name="author" content="">
+
+  
+  <meta name="generator" content="Hugo 0.40.1" />
+
+  
+  
+
+  
+  
+
+</head>
+<body>
+
+
+<header role="banner"><hgroup>
+  
+  <h1><a href="https://philtomson.github.io/">My Little Garden of Code</a></h1>
+    <h2></h2>
+</hgroup></header>
+
+
+<nav role="navigation">
+<fieldset class="mobile-nav">
+  
+  <select onchange="location = this.value;">
+    <option value="">Navigate…</option>
+      
+        <option value="https://philtomson.github.io/">» Home</option>
+      
+
+  </select>
+</fieldset>
+
+
+<ul class="main-navigation">
+  
+  
+    
+      <li><a href="https://philtomson.github.io/" title="Home">Home</a></li>
+    
+  
+</ul>
+
+
+<ul class="subscription">
+  
+
+</ul>
+
+
+</nav>
+
+
+<div id="main">
+  <div id="content">
+    <div>
+      <article class="hentry" role="article">
+
+        
+        
+
+<header>
+    <p class="meta">Jul 9, 2014
+         - 6 minute read 
+         - <a href="https://philtomson.github.io/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/#disqus_thread">Comments</a>
+
+        
+        
+        
+            - 
+        
+    </p>
+    <h1 class="entry-title">
+         Cooperative Concurrency in OCaml: A Core.Std.Async example 
+    </h1>
+</header>
+
+
+        <div class="entry-content">
+          
+          
+          
+          
+          <p>I&rsquo;ve been working on an OCaml <a href="http://mqtt.org/">Mqtt</a> client for eventual use with <a href="http://mirageos.org/">MirageOS</a>. Mqtt is a lightweight publish/subscribe messaging transport protocol that&rsquo;s aimed at embedded systems and IoT applications. Without going into much detail about the protocol, implementing it requires some form of concurrency as there is a keep-alive ping that needs to be sent from the client to the broker at regular intervals to keep the connection alive. The client can also be receiving messages from the broker and needs to be able to queue up those messages for processing.</p>
+
+<p>When considering concurrency options for OCaml, I thought I&rsquo;d give Core.Std.Async (from here on, I&rsquo;ll just refer to it as Async) a try as it&rsquo;s covered in pretty good detail in <a href="https://realworldocaml.org/v1/en/html/concurrent-programming-with-async.html">chapter 18 of Real World OCaml</a>. Of course, I didn&rsquo;t see exactly what I needed in the examples there, so I had to play with a toy producer/consumer example for a bit. The code appears below, hopefully you&rsquo;ll find it useful if you want to try out Async:</p>
+
+<p>title = &ldquo;core dot async example&rdquo;
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-ocaml" data-lang="ocaml"><span style="color:#75715e">(* compile with:
+</span><span style="color:#75715e">   corebuild -pkg async,unix  producer_consumer.native
+</span><span style="color:#75715e">*)</span>
+<span style="color:#66d9ef">open</span> <span style="color:#a6e22e">Sys</span>
+<span style="color:#66d9ef">open</span> Async.<span style="color:#a6e22e">Std</span>
+<span style="color:#66d9ef">open</span> <span style="color:#a6e22e">Core</span>
+ 
+<span style="color:#66d9ef">let</span> <span style="color:#f92672">(</span>r<span style="color:#f92672">,</span>w<span style="color:#f92672">)</span> <span style="color:#f92672">=</span> Pipe.create () 
+ 
+<span style="color:#75715e">(* producer *)</span>
+<span style="color:#66d9ef">let</span> countup hi w <span style="color:#f92672">=</span>
+  <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">rec</span> loop i <span style="color:#f92672">=</span> 
+    printf <span style="color:#e6db74">&#34;i=%d</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span> i <span style="color:#f92672">;</span>
+    <span style="color:#66d9ef">if</span> <span style="color:#f92672">(</span>i <span style="color:#f92672">&lt;</span> hi <span style="color:#f92672">&amp;&amp;(</span> not <span style="color:#f92672">(</span>Pipe.is_closed w<span style="color:#f92672">)))</span> <span style="color:#66d9ef">then</span> 
+       Pipe.write w i <span style="color:#f92672">&gt;&gt;&gt;</span>
+       <span style="color:#66d9ef">fun</span> () <span style="color:#f92672">-&gt;</span> loop <span style="color:#f92672">(</span>i<span style="color:#f92672">+</span>1<span style="color:#f92672">)</span>
+     <span style="color:#66d9ef">else</span> Pipe.close w
+  <span style="color:#66d9ef">in</span> 
+  loop 0 <span style="color:#f92672">;;</span>
+ 
+<span style="color:#75715e">(* consumer *)</span>
+<span style="color:#66d9ef">let</span> <span style="color:#66d9ef">rec</span> readloop r <span style="color:#f92672">=</span> 
+  Pipe.read r <span style="color:#f92672">&gt;&gt;=</span>
+  <span style="color:#66d9ef">function</span>
+  <span style="color:#f92672">|</span> <span style="color:#f92672">`</span><span style="color:#a6e22e">Eof</span> <span style="color:#f92672">-&gt;</span> return ()
+  <span style="color:#f92672">|</span> <span style="color:#f92672">`</span><span style="color:#a6e22e">Ok</span> v <span style="color:#f92672">-&gt;</span> return <span style="color:#f92672">(</span>printf <span style="color:#e6db74">&#34;Got %d</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span> v<span style="color:#f92672">)</span> <span style="color:#f92672">&gt;&gt;=</span>
+             <span style="color:#66d9ef">fun</span> () <span style="color:#f92672">-&gt;</span> after <span style="color:#f92672">(</span>Time.Span.of_sec 0<span style="color:#f92672">.</span>5<span style="color:#f92672">)</span> <span style="color:#f92672">&gt;&gt;=</span>
+             <span style="color:#66d9ef">fun</span> () <span style="color:#f92672">-&gt;</span> readloop r  <span style="color:#f92672">;;</span>
+ 
+ 
+<span style="color:#66d9ef">let</span> () <span style="color:#f92672">=</span>
+  Pipe.set_size_budget r 256  <span style="color:#f92672">;</span>
+  countup 10 w<span style="color:#f92672">;</span>
+  ignore<span style="color:#f92672">(</span>readloop r<span style="color:#f92672">);</span>
+  Core.Never_returns.never_returns <span style="color:#f92672">(</span>Scheduler.go ()<span style="color:#f92672">)</span> </code></pre></div></p>
+
+<p>Async falls under the category of cooperative concurrency along with other frameworks that have an event loop like Python&rsquo;s Twisted and Node.js. Preemptive concurrency is on the other side of the concurrency divide, and generally involves threads and mutexes. Cooperative concurrency is usually done by passing callbacks to functions that get called after some call in the function has returned data. Node.js is famous for this: you need to read data from some other website, for example, so you call your function for doing this and pass a callback to it that will actually return the data after it becomes available. Meanwhile instead of blocking waiting for the data to come back your program has gone on to call other functions in the event loop. This works fairly nicely (for some value of <em>nicely</em>) in Javascript where there are very few blocking calls&hellip; but note that <a href="http://callbackhell.com/">callback hell</a> is a thing as callbacks get nested into callbacks sometimes several layers deep.</p>
+
+<p>Async works a bit differently, at least on the surface, from the asynchronous style of Javascript used in Node.js and this seems to help avoid the nested callback problem. Async is very monadic and that seems to help. Well-behaved Async functions don&rsquo;t block, but instead return a value of type <em>Deferred.t</em> (Async.Deferred.t). A <em>&lsquo;a Deferred.t</em> value is kind of like a <em>promise</em> in some other languages, a promise that the value you seek will be computed sometime in the future. There&rsquo;s a scheduler that schedules these deferred events.</p>
+
+<p>In addition, Async also has these very handy <em>Pipe</em> thingys that are basically FIFOs that connect different parts of your program together in a way that is reminiscent of <a href="http://en.wikipedia.org/wiki/Kahn_process_networks">Kahn Process Networks</a>. (Async Pipes don&rsquo;t have anything to do with Unix pipes other than a very surfacy resemblence)</p>
+
+<p>You&rsquo;ll notice that a <em>Pipe</em> is created at line 5 of the code above where <em>r</em> is the reader end of the pipe and <em>w</em> is the writer end. The <em>countup</em> function is our producer and simply counts up to a value passed in. On every iteration of the <em>loop</em> the new count value gets writen to the pipe at line 12 ( <em>Pipe.write w i</em> ). Notice that there&rsquo;s an <em>&gt;&gt;&gt;</em> operator at the end of that line. This is also called <em>upon</em> and could also have been written as: <em>upon (Pipe.write w i) (fun () -&gt; loop (i+1))</em>. <em>upon</em> has the following type: <em>&lsquo;a Deferred.t -&gt; (&lsquo;a -&gt; unit) -&gt; unit</em>.  When the deferred value that&rsquo;s passed into <em>upon</em> is determined, the callback will be called, in this case we call <em>loop (i+1)</em> and recurse.</p>
+
+<p>The readloop function (starting at line 19) uses the bind operator ( &gt;&gt;= ) which has the type: <em>&lsquo;a Deferred.t -&gt; (&lsquo;a -&gt; &lsquo;b Deferred.t) -&gt; &lsquo;b Deferred.t</em>. When the deferred value of <em>Pipe.read r</em>  is determined, the result is passed into the callback function which will print what was received from the pipe (on success), then wait a half second before going on to call <em>readloop</em> again. For more details about the sequencing operators &gt;&gt;= (<em>bind</em>), &gt;&gt;&gt; (<em>upon</em>) and &gt;&gt;| (<em>map</em>) have a look at the <em>Real World OCaml</em> link above. Notice that we use <em>return</em> to wrap a value in a
+<em>Deferred.t</em> (the type of <em>return</em> is <em>&lsquo;a -&gt; &lsquo;a Deferred.t</em>) in order to make <em>readloop</em> type-check and compile as <em>readloop</em>&rsquo;s type is: <em>int Pipe.Reader.t -&gt; unit Deferred.t</em>.</p>
+
+<p>So <em>countup</em> writes values to the <em>Pipe</em> while <em>readloop</em> reads values from it at half second intervals. If you compile this program and run it you&rsquo;ll see:</p>
+
+<pre><code>i=0
+i=1
+Got 0
+i=2
+i=3
+i=4
+i=5
+i=6
+i=7
+i=8
+i=9
+i=10
+Got 1
+Got 2
+Got 3
+Got 4
+Got 5
+Got 6
+Got 7
+Got 8
+Got 9
+</code></pre>
+
+<p>The first lines up until &lsquo;i=10&rsquo; come out pretty much instantaneously, while the next lines (&lsquo;Got 1&rsquo; through &lsquo;Got 9&rsquo;) came out every half second.</p>
+
+<p>However&hellip; Notice line 32 of the code above: <em>Pipe.set_size_budget r 256  ;</em>
+Initially I thought (based on the explanation in RWO) that *Pipe*s were queues of infinite length. I didn&rsquo;t know you had to <em>set_size_budget</em> on the Pipe. So earlier attempts omitted line 32 above and I got the following result:</p>
+
+<pre><code>i=0
+i=1
+Got 0
+i=2
+Got 1
+i=3
+Got 2
+i=4
+Got 3
+i=5
+Got 4
+i=6
+Got 5
+i=7
+Got 6
+i=8
+Got 7
+i=9
+Got 8
+i=10
+Got 9
+</code></pre>
+
+<p>(With a half second delay between each &lsquo;Got&rsquo; message)</p>
+
+<p>The <em>Pipe.write</em> seemed to block waiting for a <em>Pipe.read</em> which didn&rsquo;t seem right given the description of <em>Pipe</em> in RWO. But as it turns out the pipe size defaults to 0 which means that the pipe fills up immediately. To get a deeper pipe, you need to call <em>set_budget_size</em> on the pipe (either end, apparently) as shown on line 32 of the code above. (Aside: It seems like there should be an optional parameter <em>budget_size</em> to the <em>Pipe.create</em> function.)</p>
+
+<p><strong>Conclusions</strong></p>
+
+<p>While in essense we&rsquo;re still using callbacks in our event loop (very Javascript/Node.js-ish), the monadic sequencing operators &gt;&gt;=, &gt;&gt;| and &gt;&gt;&gt; do seem to make the code easier to read and reason about. Add in the handy *Pipe*s and it&rsquo;s not a bad way to do concurrency, really, once you get the hang of dealing with the monads. It should be noted, however, that as in most cooperative concurrency schemes, you&rsquo;re only going to be using one core of your processor.</p>
+
+<p>Finally&hellip; I&rsquo;m pretty new to Core and Async so if I&rsquo;ve made some mistakes here in the explanation or if the code could be more elegant please don&rsquo;t hesitate to let me know in the comments.</p>
+
+        </div>
+        
+
+<footer>
+  <p class="meta">
+    <span class="byline author vcard">Posted by <span class="fn"></span></span>
+    
+    <time>Jul 9, 2014</time>
+    
+    </span>
+  </p>
+
+  
+  
+
+  
+
+  <p class="meta">
+    
+        <a class="basic-alignment left" href="https://philtomson.github.io/blog/2014-05-30-stop-the-presses-ocaml-wins/" title="stop the presses ocaml wins">stop the presses ocaml wins</a>
+    
+
+    
+      <a class="basic-alignment right" href="https://philtomson.github.io/blog/2014-09-10-some-notes-on-building-and-running-mirage-unikernels-on-cubieboard2/" title="Some notes on building and running mirage unikernels on Cubieboard2">Some notes on building and running mirage unikernels on Cubieboard2</a>
+    
+  </p>
+  
+    
+      <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'mylittlegardenofcode';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    
+  
+</footer>
+
+      </article>
+    </div>
+    
+
+<aside class="sidebar thirds">
+  <section class="first odd">
+
+    
+
+    <p>
+      
+    </p>
+  </section>
+
+
+
+  
+  <ul class="sidebar-nav">
+    <li class="sidebar-nav-item">
+      <a target="_blank" href="https://github.com/philtomson/" title="https://github.com/philtomson/"><i class="fa fa-github fa-3x"></i></a>
+      
+      
+      
+      
+         
+      
+      
+      <a target="_blank" href="https://stackoverflow.com/users/46190/aneccodeal" title="https://stackoverflow.com/users/46190/aneccodeal"><i class="fa fa-stack-overflow fa-3x"></i></a>
+      
+      
+      
+      
+      
+
+    
+    
+    </li>
+  </ul>
+
+  
+
+  
+
+  
+  
+  
+    
+      <section class="even">
+        <h1>Recent Posts</h1>
+        <ul id="recent_posts">
+          
+          
+            
+              <li class="post">
+                <a href="/blog/2018-06-11-migrated-blog-from-octopress-to-hugo/">Migrated blog from Octopress to Hugo</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-06-testing-mathjax/">Testing MathJax</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2017-02-02-funemployment/">FUNemployment</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-09-10-some-notes-on-building-and-running-mirage-unikernels-on-cubieboard2/">Some notes on building and running mirage unikernels on Cubieboard2</a>
+              </li>
+            
+          
+            
+              <li class="post">
+                <a href="/blog/2014-07-09-cooperative-concurrency-in-ocaml-a-core.std.async-example/">Cooperative Concurrency in OCaml: A Core.Std.Async example</a>
+              </li>
+            
+          
+        </ul>
+      </section>
+    
+  
+</aside>
+
+  </div>
+</div>
+
+<footer role="contentinfo">
+  <p>Copyright &copy; 2018  - <a href="https://philtomson.github.io/license/">License</a> -
+  <span class="credit">Powered by <a target="_blank" href="https://gohugo.io">Hugo</a> and <a target="_blank" href="https://github.com/parsiya/hugo-octopress/">Hugo-Octopress</a> theme.
+</p>
+
+</footer>
+
+
+
+
+
+
+</body>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+</html>
+
+
