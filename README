@@ -1,0 +1,33 @@
+Steps for new posts:
+1) create a new md file at content/post, ex:
+   $ vi content/post/new_test.md
+   
+   Example of header in that file:
+
+   +++
+   title = "New_test"
+   date  = "2019-01-03"
+   slug  = "2019/01/03/new_test"
+   +++
+
+2) Run hugo to create static site in ./philtomson.github.com directory here:
+   $ hugo
+   
+   To optionally test:
+   $ hugo server -D
+
+   then open http:/localhost:1313
+
+3) To deploy:
+
+   $ cd philtomson.github.com
+   $ git status #check to see that things have changed
+   $ git commit -am "some commit message"
+   $ git push origin master
+
+   Now you should see your changes at http//philtomson.github.com within about 5 minutes
+
+TODO: 
+   the problem now is that the source posts are not under git so we need to create 
+   another repo on gitub for this and make philtomson.github.com a submodule
+   of that one.

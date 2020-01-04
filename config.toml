@@ -3,7 +3,7 @@ languageCode = "en-us"
 title = "My Little Garden of Code"
 theme = "Hugo-Octopress"
 disqusShortname = "mylittlegardenofcode"
-publishdir = "philtomson.github.com"
+publishDir = "./philtomson.github.com"
 
 
 [permalinks]

@@ -87,7 +87,7 @@ scatter!(data_time_steps[2:end],predictions, label="predicted")
 
 On line 4 we're now *using CuArrays*. This will pull in CUDA arrays from [CuArrays.jl](https://github.com/JuliaGPU/CuArrays.jl).
 
-Now in order to indicate that we want some data on the GPU we wrap it in the *Flux.gpu()* function as we do for the *x* and *y* assignments on lines 16 & 17. Note that the weights *w1* and *w2* are also tracked parameters for the sake of backpropagation so for those assignments (lines 19 & 20) we call *gpu* on the *randn* matrices and then pass that as the parameter to *param*.
+In order to indicate that we want some data on the GPU we wrap it in the *Flux.gpu()* function as we do for the *x* and *y* assignments on lines 16 & 17. Note that the weights *w1* and *w2* are also tracked parameters for the sake of backpropagation so for those assignments (lines 19 & 20) we call *gpu* on the *randn* matrices and then pass that as the parameter to *param*.
 
 The other signficant change here is that now in the *forward()* function where we call the activation function (line 26) it must chang from:
 

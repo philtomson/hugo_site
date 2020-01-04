@@ -1,8 +1,8 @@
----
-title: "New_test"
-date: 2020-01-03T10:16:49-08:00
-draft: true
----
++++
+title = "New_test"
+date  = "2019-01-03"
+slug  = "2019/01/03/new_test"
++++
 
-Testing!
+Testing 1.. 2.. 3..
 
